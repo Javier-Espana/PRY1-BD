@@ -41,10 +41,11 @@ async function obtenerArticulo(id) {
   return await db.collection(COLLECTION).findOne({ _id: new ObjectId(id) });
 }
 
-async function listarMenuRestaurante(restauranteId, { soloDisponibles = true, sort = { precio: 1 }, skip = 0, limit = 50 } = {}) {
+async function listarMenuRestaurante(restauranteId, { soloDisponibles = true, categoria, sort = { precio: 1 }, skip = 0, limit = 50 } = {}) {
   const db = getDB();
   const filtro = { restaurante_id: new ObjectId(restauranteId) };
   if (soloDisponibles) filtro.disponible = true;
+  if (categoria) filtro.categoria = categoria;
 
   return await db.collection(COLLECTION)
     .find(filtro)

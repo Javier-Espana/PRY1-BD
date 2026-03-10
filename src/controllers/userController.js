@@ -11,11 +11,13 @@ async function crearUsuario(req, res) {
 
 async function listarUsuarios(req, res) {
   try {
-    const { skip, limit } = req.query;
-    const result = await service.listarUsuarios({
+    const { skip, limit, rol } = req.query;
+    const options = {
       skip: parseInt(skip) || 0,
       limit: parseInt(limit) || 10
-    });
+    };
+    if (rol) options.filtro = { rol };
+    const result = await service.listarUsuarios(options);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });

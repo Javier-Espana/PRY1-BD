@@ -1,17 +1,28 @@
 const RestaurantesView = (() => {
   let page = 1;
   const limit = 15;
+  let filtroCategoria = '';
+  let sortField = '';
+  let sortOrder = -1;
+  let categoriasList = [];
 
   async function render() {
     UI.setTitle('Restaurantes');
     UI.loading();
+    try {
+      const cats = await API.restaurantes.categorias();
+      categoriasList = Array.isArray(cats) ? cats : [];
+    } catch (e) { categoriasList = []; }
     await loadList();
   }
 
   async function loadList() {
     try {
       const skip = (page - 1) * limit;
-      const data = await API.restaurantes.listar({ skip, limit });
+      const params = { skip, limit };
+      if (filtroCategoria) params.categoria = filtroCategoria;
+      if (sortField) { params.sort_field = sortField; params.sort_order = sortOrder; }
+      const data = await API.restaurantes.listar(params);
       const items = Array.isArray(data) ? data : (data.data || []);
 
       UI.render(`
@@ -22,6 +33,25 @@ const RestaurantesView = (() => {
             <button class="btn btn-outline btn-sm" id="btnCercanos">Cercanos</button>
           </div>
           <button class="btn btn-primary" id="btnNewRest">+ Nuevo Restaurante</button>
+        </div>
+        <div class="toolbar" style="margin-top:-8px">
+          <div class="toolbar-left">
+            <select class="form-control" id="filtroCategoria" style="width:200px">
+              <option value="">Todas las categorias</option>
+              ${categoriasList.map(c => `<option value="${c}" ${c === filtroCategoria ? 'selected' : ''}>${c}</option>`).join('')}
+            </select>
+            <select class="form-control" id="sortField" style="width:180px">
+              <option value="">Ordenar por...</option>
+              <option value="nombre" ${sortField === 'nombre' ? 'selected' : ''}>Nombre</option>
+              <option value="rating_promedio" ${sortField === 'rating_promedio' ? 'selected' : ''}>Rating</option>
+              <option value="total_resenas" ${sortField === 'total_resenas' ? 'selected' : ''}>Resenas</option>
+              <option value="fecha_creacion" ${sortField === 'fecha_creacion' ? 'selected' : ''}>Fecha creacion</option>
+            </select>
+            <select class="form-control" id="sortOrder" style="width:120px">
+              <option value="-1" ${sortOrder === -1 ? 'selected' : ''}>Desc &#9660;</option>
+              <option value="1" ${sortOrder === 1 ? 'selected' : ''}>Asc &#9650;</option>
+            </select>
+          </div>
         </div>
         <div class="card">
           <div class="table-wrapper">
@@ -73,6 +103,22 @@ const RestaurantesView = (() => {
       if (e.key === 'Enter') performSearch();
     });
 
+    document.getElementById('filtroCategoria')?.addEventListener('change', (e) => {
+      filtroCategoria = e.target.value;
+      page = 1;
+      loadList();
+    });
+    document.getElementById('sortField')?.addEventListener('change', (e) => {
+      sortField = e.target.value;
+      page = 1;
+      loadList();
+    });
+    document.getElementById('sortOrder')?.addEventListener('change', (e) => {
+      sortOrder = parseInt(e.target.value);
+      page = 1;
+      loadList();
+    });
+
     document.querySelectorAll('.rest-detail').forEach(el => {
       el.addEventListener('click', (e) => { e.preventDefault(); showDetail(el.dataset.id); });
     });
@@ -99,7 +145,7 @@ const RestaurantesView = (() => {
         <div class="form-group">
           <label class="form-label">Categoria *</label>
           <select class="form-control" id="fCat">
-            ${['Comida Rapida','Italiana','Asiatica','Mexicana','Americana','Mediterranea','Francesa','Japonesa','China','Peruana','Guatemalteca','Postres','Cafe','Otro'].map(c => `<option>${c}</option>`).join('')}
+            ${['Comida Rápida','Italiana','Asiática','Mexicana','Americana','Mediterránea','Francesa','Japonesa','China','Peruana','Guatemalteca','Postres','Café','Otro'].map(c => `<option>${c}</option>`).join('')}
           </select>
         </div>
         <div class="form-group">

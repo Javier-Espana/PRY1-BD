@@ -1,6 +1,7 @@
 const ResenasView = (() => {
   let page = 1;
   const limit = 15;
+  let filtroCalificacion = '';
 
   async function render() {
     UI.setTitle('Resenas');
@@ -11,12 +12,18 @@ const ResenasView = (() => {
   async function loadList() {
     try {
       const skip = (page - 1) * limit;
-      const data = await API.resenas.listar({ skip, limit });
+      const params = { skip, limit };
+      if (filtroCalificacion) params.calificacion = filtroCalificacion;
+      const data = await API.resenas.listar(params);
       const items = Array.isArray(data) ? data : (data.data || []);
 
       UI.render(`
         <div class="toolbar">
           <div class="toolbar-left">
+            <select class="form-control" id="filtroCalificacion" style="width:180px">
+              <option value="">Todas las calificaciones</option>
+              ${[5,4,3,2,1].map(c => `<option value="${c}" ${String(c) === filtroCalificacion ? 'selected' : ''}>${'★'.repeat(c)}${'☆'.repeat(5-c)} (${c})</option>`).join('')}
+            </select>
             <button class="btn btn-outline btn-sm" id="btnGridFS">Archivos GridFS</button>
           </div>
           <button class="btn btn-primary" id="btnNewResena">+ Nueva Resena</button>
@@ -69,6 +76,11 @@ const ResenasView = (() => {
   function bindEvents() {
     document.getElementById('btnNewResena')?.addEventListener('click', showCreateForm);
     document.getElementById('btnGridFS')?.addEventListener('click', showGridFSFiles);
+    document.getElementById('filtroCalificacion')?.addEventListener('change', (e) => {
+      filtroCalificacion = e.target.value;
+      page = 1;
+      loadList();
+    });
     document.querySelectorAll('.btn-detail-res').forEach(el => {
       el.addEventListener('click', () => showDetail(el.dataset.id));
     });

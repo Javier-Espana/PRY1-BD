@@ -1,6 +1,7 @@
 const UsuariosView = (() => {
   let page = 1;
   const limit = 15;
+  let filtroRol = '';
 
   async function render() {
     UI.setTitle('Usuarios');
@@ -11,12 +12,19 @@ const UsuariosView = (() => {
   async function loadList() {
     try {
       const skip = (page - 1) * limit;
-      const data = await API.usuarios.listar({ skip, limit });
+      const params = { skip, limit };
+      if (filtroRol) params.rol = filtroRol;
+      const data = await API.usuarios.listar(params);
       const items = Array.isArray(data) ? data : (data.data || []);
 
       UI.render(`
         <div class="toolbar">
-          <div class="toolbar-left"></div>
+          <div class="toolbar-left">
+            <select class="form-control" id="filtroRol" style="width:180px">
+              <option value="">Todos los roles</option>
+              ${['cliente','admin','repartidor'].map(r => `<option value="${r}" ${r === filtroRol ? 'selected' : ''}>${r.charAt(0).toUpperCase() + r.slice(1)}</option>`).join('')}
+            </select>
+          </div>
           <button class="btn btn-primary" id="btnNewUser">+ Nuevo Usuario</button>
         </div>
         <div class="card">
@@ -61,6 +69,11 @@ const UsuariosView = (() => {
 
   function bindEvents() {
     document.getElementById('btnNewUser')?.addEventListener('click', showCreateForm);
+    document.getElementById('filtroRol')?.addEventListener('change', (e) => {
+      filtroRol = e.target.value;
+      page = 1;
+      loadList();
+    });
     document.querySelectorAll('.user-detail').forEach(el => {
       el.addEventListener('click', (e) => { e.preventDefault(); showDetail(el.dataset.id); });
     });

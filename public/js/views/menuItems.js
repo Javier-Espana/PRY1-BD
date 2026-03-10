@@ -2,6 +2,8 @@ const MenuItemsView = (() => {
   let selectedRestId = null;
   let page = 1;
   const limit = 20;
+  let soloDisponibles = false;
+  let filtroCategoria = '';
 
   async function render() {
     UI.setTitle('Articulos del Menu');
@@ -21,10 +23,21 @@ const MenuItemsView = (() => {
               <option value="">-- Seleccionar restaurante --</option>
               ${items.map(r => `<option value="${r._id}" ${r._id === selectedRestId ? 'selected' : ''}>${r.nombre}</option>`).join('')}
             </select>
+            <select class="form-control" id="filtroCatMenu" style="width:180px">
+              <option value="">Todas las categorias</option>
+              ${['Entrada','Plato Fuerte','Postre','Bebida','Acompañamiento','Ensalada','Sopa','Snack','Otro'].map(c => `<option value="${c}" ${c === filtroCategoria ? 'selected' : ''}>${c}</option>`).join('')}
+            </select>
+            <label style="display:flex;align-items:center;gap:4px;color:var(--text-secondary);font-size:13px;cursor:pointer">
+              <input type="checkbox" id="chkDisponibles" ${soloDisponibles ? 'checked' : ''}> Solo disponibles
+            </label>
+          </div>
+          <button class="btn btn-primary" id="btnNewItem" ${!selectedRestId ? 'disabled' : ''}>+ Nuevo Articulo</button>
+        </div>
+        <div class="toolbar" style="margin-top:-8px">
+          <div class="toolbar-left">
             <input type="text" class="search-input" id="menuSearch" placeholder="Buscar articulos...">
             <button class="btn btn-outline btn-sm" id="btnSearchMenu">Buscar</button>
           </div>
-          <button class="btn btn-primary" id="btnNewItem" ${!selectedRestId ? 'disabled' : ''}>+ Nuevo Articulo</button>
         </div>
         <div id="menuContent">
           ${selectedRestId ? '<div class="loading-state"><div class="spinner"></div> Cargando...</div>' : '<div class="empty-state"><p>Selecciona un restaurante para ver su menu</p></div>'}
@@ -38,6 +51,18 @@ const MenuItemsView = (() => {
           loadMenu();
           document.getElementById('btnNewItem').disabled = false;
         }
+      });
+
+      document.getElementById('filtroCatMenu')?.addEventListener('change', (e) => {
+        filtroCategoria = e.target.value;
+        page = 1;
+        if (selectedRestId) loadMenu();
+      });
+
+      document.getElementById('chkDisponibles')?.addEventListener('change', (e) => {
+        soloDisponibles = e.target.checked;
+        page = 1;
+        if (selectedRestId) loadMenu();
       });
 
       document.getElementById('btnNewItem')?.addEventListener('click', showCreateForm);
@@ -60,7 +85,9 @@ const MenuItemsView = (() => {
 
     try {
       const skip = (page - 1) * limit;
-      const data = await API.menu.listar(selectedRestId, { skip, limit, solo_disponibles: false });
+      const params = { skip, limit, solo_disponibles: !soloDisponibles ? false : true };
+      if (filtroCategoria) params.categoria = filtroCategoria;
+      const data = await API.menu.listar(selectedRestId, params);
       const items = Array.isArray(data) ? data : (data.data || []);
 
       container.innerHTML = `
@@ -127,7 +154,7 @@ const MenuItemsView = (() => {
         <div class="form-group">
           <label class="form-label">Categoria</label>
           <select class="form-control" id="fCat">
-            ${['Entrada','Plato Fuerte','Postre','Bebida','Acompanamiento','Ensalada','Sopa','Snack','Otro'].map(c => `<option>${c}</option>`).join('')}
+            ${['Entrada','Plato Fuerte','Postre','Bebida','Acompañamiento','Ensalada','Sopa','Snack','Otro'].map(c => `<option>${c}</option>`).join('')}
           </select>
         </div>
         <div class="form-group">

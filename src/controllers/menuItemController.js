@@ -20,12 +20,14 @@ async function crearVariosArticulos(req, res) {
 
 async function listarMenuRestaurante(req, res) {
   try {
-    const { skip, limit, solo_disponibles } = req.query;
-    const result = await service.listarMenuRestaurante(req.params.restauranteId, {
+    const { skip, limit, solo_disponibles, categoria } = req.query;
+    const options = {
       soloDisponibles: solo_disponibles !== 'false',
       skip: parseInt(skip) || 0,
       limit: parseInt(limit) || 50
-    });
+    };
+    if (categoria) options.categoria = categoria;
+    const result = await service.listarMenuRestaurante(req.params.restauranteId, options);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });

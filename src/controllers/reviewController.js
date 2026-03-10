@@ -11,11 +11,13 @@ async function crearResena(req, res) {
 
 async function listarResenas(req, res) {
   try {
-    const { skip, limit } = req.query;
-    const result = await service.listarResenas({
+    const { skip, limit, calificacion } = req.query;
+    const options = {
       skip: parseInt(skip) || 0,
       limit: parseInt(limit) || 10
-    });
+    };
+    if (calificacion) options.filtro = { calificacion: parseInt(calificacion) };
+    const result = await service.listarResenas(options);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
