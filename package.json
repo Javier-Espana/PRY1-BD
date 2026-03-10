@@ -11,7 +11,8 @@
     "setup": "npm run indexes && npm run seed",
     "notablescan": "node src/scripts/configureDB.js enable",
     "notablescan:off": "node src/scripts/configureDB.js disable",
-    "notablescan:test": "node src/scripts/configureDB.js test"
+    "notablescan:test": "node src/scripts/configureDB.js test",
+    "docs": "node src/scripts/generateDocx.js"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
@@ -20,7 +21,15 @@
     "multer": "^1.4.5-lts.1",
     "readline-sync": "^1.4.10"
   },
-  "keywords": ["mongodb", "restaurants", "orders", "reviews"],
+  "keywords": [
+    "mongodb",
+    "restaurants",
+    "orders",
+    "reviews"
+  ],
   "author": "Roberto Barreda, Javier España, Diego López",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "docx": "^9.6.1"
+  }
 }

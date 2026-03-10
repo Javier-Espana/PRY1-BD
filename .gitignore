@@ -5,3 +5,5 @@ PENDIENTES.md
 GUIA_PENDIENTES_MANUALES.md
 # Documentos de referencia del proyecto (no relevantes para el repo)
 Data para entender que hacer/
+# El .docx se genera con: node src/scripts/generateDocx.js
+docs/DOCUMENTO_DISENO.docx
