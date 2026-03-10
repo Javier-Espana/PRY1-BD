@@ -1,11 +1,4 @@
-/**
- * Script de seed: genera datos de prueba para todas las colecciones.
- * Crea al menos 50,000 documentos en Ordenes (requisito del proyecto).
- * 
- * Uso: npm run seed
- */
-
-const { connectDB, closeDB } = require('../config/database');
+﻿const { connectDB, closeDB } = require('../config/database');
 const { initCollections } = require('../models');
 const { createIndexes } = require('./createIndexes');
 
@@ -113,29 +106,29 @@ function randomCoords() {
 async function seedData() {
   const db = await connectDB();
 
-  console.log('\n🌱 Iniciando seed de datos...\n');
+  console.log('\nIniciando seed de datos...\n');
 
   // Inicializar colecciones con validación
-  console.log('📋 Inicializando colecciones con validación JSON Schema...');
+  console.log('Inicializando colecciones con validación JSON Schema...');
   await initCollections(db);
 
   // Crear índices
-  console.log('\n📋 Creando índices...');
+  console.log('\nCreando índices...');
   await createIndexes();
 
   // Limpiar datos existentes
-  console.log('\n🗑️  Limpiando datos existentes...');
+  console.log('\nLimpiando datos existentes...');
   await db.collection('Restaurantes').deleteMany({});
   await db.collection('Usuarios').deleteMany({});
   await db.collection('ArticulosMenu').deleteMany({});
   await db.collection('Ordenes').deleteMany({});
   await db.collection('Resenas').deleteMany({});
-  console.log('  ✅ Colecciones limpiadas');
+  console.log('  Colecciones limpiadas');
 
   // ============================================================
   // 1. Restaurantes (25)
   // ============================================================
-  console.log('\n🍽️  Creando restaurantes...');
+  console.log('\nCreando restaurantes...');
   const restauranteDocs = NOMBRES_RESTAURANTES.map((nombre, i) => {
     const coords = randomCoords();
     return {
@@ -154,12 +147,12 @@ async function seedData() {
 
   const restaurantesResult = await db.collection('Restaurantes').insertMany(restauranteDocs);
   const restauranteIds = Object.values(restaurantesResult.insertedIds);
-  console.log(`  ✅ ${restauranteIds.length} restaurantes creados`);
+  console.log(`  ${restauranteIds.length} restaurantes creados`);
 
   // ============================================================
   // 2. Usuarios (200)
   // ============================================================
-  console.log('\n👤 Creando usuarios...');
+  console.log('\nCreando usuarios...');
   const usuarioDocs = [];
   const usedEmails = new Set();
 
@@ -186,12 +179,12 @@ async function seedData() {
 
   const usuariosResult = await db.collection('Usuarios').insertMany(usuarioDocs);
   const usuarioIds = Object.values(usuariosResult.insertedIds);
-  console.log(`  ✅ ${usuarioIds.length} usuarios creados`);
+  console.log(`  ${usuarioIds.length} usuarios creados`);
 
   // ============================================================
   // 3. Artículos del Menú (~250, ~10 por restaurante)
   // ============================================================
-  console.log('\n📝 Creando artículos del menú...');
+  console.log('\nCreando artículos del menú...');
   const articuloDocs = [];
 
   for (const restId of restauranteIds) {
@@ -220,7 +213,7 @@ async function seedData() {
 
   const articulosResult = await db.collection('ArticulosMenu').insertMany(articuloDocs);
   const articuloIds = Object.values(articulosResult.insertedIds);
-  console.log(`  ✅ ${articuloIds.length} artículos del menú creados`);
+  console.log(`  ${articuloIds.length} artículos del menú creados`);
 
   // Mapear artículos por restaurante
   const articulosPorRestaurante = {};
@@ -242,7 +235,7 @@ async function seedData() {
   // ============================================================
   // 4. Órdenes (50,000+ documentos - REQUERIMIENTO)
   // ============================================================
-  console.log('\n📦 Creando 55,000 órdenes (esto toma unos segundos)...');
+  console.log('\nCreando 55,000 órdenes (esto toma unos segundos)...');
   const TOTAL_ORDENES = 55000;
   const BATCH_SIZE = 5000;
 
@@ -303,15 +296,15 @@ async function seedData() {
       const ids = Object.values(result.insertedIds);
       ordenIdsList.push(...ids);
       ordenesInsertadas += ordenDocs.length;
-      console.log(`  📦 Batch ${batch + 1}: ${ordenDocs.length} órdenes (total: ${ordenesInsertadas})`);
+      console.log(`  Batch ${batch + 1}: ${ordenDocs.length} órdenes (total: ${ordenesInsertadas})`);
     }
   }
-  console.log(`  ✅ ${ordenesInsertadas} órdenes creadas`);
+  console.log(`  ${ordenesInsertadas} órdenes creadas`);
 
   // ============================================================
   // 5. Reseñas (~5,000 para órdenes entregadas)
   // ============================================================
-  console.log('\n⭐ Creando reseñas...');
+  console.log('\nCreando reseñas...');
 
   // Obtener órdenes entregadas
   const ordenesEntregadas = await db.collection('Ordenes')
@@ -345,12 +338,12 @@ async function seedData() {
   if (resenaDocs.length > 0) {
     await db.collection('Resenas').insertMany(resenaDocs);
   }
-  console.log(`  ✅ ${resenaDocs.length} reseñas creadas`);
+  console.log(`  ${resenaDocs.length} reseñas creadas`);
 
   // ============================================================
   // 6. Actualizar ratings de restaurantes
   // ============================================================
-  console.log('\n📊 Actualizando ratings de restaurantes...');
+  console.log('\nActualizando ratings de restaurantes...');
 
   for (const restId of restauranteIds) {
     const pipeline = [
@@ -377,27 +370,27 @@ async function seedData() {
       );
     }
   }
-  console.log('  ✅ Ratings actualizados');
+  console.log('  Ratings actualizados');
 
   // ============================================================
   // Resumen
   // ============================================================
   console.log('\n' + '='.repeat(50));
-  console.log('📊 RESUMEN DE SEED');
+  console.log('RESUMEN DE SEED');
   console.log('='.repeat(50));
-  console.log(`  🍽️  Restaurantes:     ${restauranteIds.length}`);
-  console.log(`  👤 Usuarios:          ${usuarioIds.length}`);
-  console.log(`  📝 Artículos menú:    ${articuloIds.length}`);
-  console.log(`  📦 Órdenes:           ${ordenesInsertadas}`);
-  console.log(`  ⭐ Reseñas:           ${resenaDocs.length}`);
+  console.log(`  Restaurantes:     ${restauranteIds.length}`);
+  console.log(`  Usuarios:          ${usuarioIds.length}`);
+  console.log(`  Artículos menú:    ${articuloIds.length}`);
+  console.log(`  Órdenes:           ${ordenesInsertadas}`);
+  console.log(`  Reseñas:           ${resenaDocs.length}`);
   console.log('='.repeat(50));
-  console.log('✅ Seed completado exitosamente!\n');
+  console.log('Seed completado exitosamente!\n');
 }
 
 // Ejecutar
 if (require.main === module) {
   seedData()
-    .catch(err => console.error('❌ Error en seed:', err))
+    .catch(err => console.error('Error en seed:', err))
     .finally(() => closeDB());
 }
 

@@ -1,181 +1,96 @@
-/**
- * Controlador de Restaurantes.
- * CRUD completo + consultas geoespaciales + búsqueda por texto.
- */
-const { ObjectId } = require('mongodb');
-const { getDB } = require('../config/database');
+const service = require('../services/restaurantService');
 
-const COLLECTION = 'Restaurantes';
-
-/**
- * Crear un restaurante.
- */
-async function crearRestaurante(datos) {
-  const db = getDB();
-  const doc = {
-    nombre: datos.nombre,
-    descripcion: datos.descripcion || '',
-    categoria: datos.categoria,
-    direccion: {
-      type: 'Point',
-      coordinates: [parseFloat(datos.longitud), parseFloat(datos.latitud)]
-    },
-    telefono: datos.telefono || '',
-    email_contacto: datos.email_contacto || '',
-    rating_promedio: 0.0,
-    total_resenas: 0,
-    activo: true,
-    fecha_registro: new Date()
-  };
-
-  const result = await db.collection(COLLECTION).insertOne(doc);
-  return { id: result.insertedId, ...doc };
-}
-
-/**
- * Obtener restaurante por ID.
- */
-async function obtenerRestaurante(id) {
-  const db = getDB();
-  return await db.collection(COLLECTION).findOne({ _id: new ObjectId(id) });
-}
-
-/**
- * Listar restaurantes con filtros, proyección, sort, skip, limit.
- */
-async function listarRestaurantes({ filtro = {}, proyeccion = {}, sort = { rating_promedio: -1 }, skip = 0, limit = 10 } = {}) {
-  const db = getDB();
-  return await db.collection(COLLECTION)
-    .find(filtro, { projection: proyeccion })
-    .sort(sort)
-    .skip(skip)
-    .limit(limit)
-    .toArray();
-}
-
-/**
- * Buscar restaurantes cercanos a una ubicación (geoespacial).
- */
-async function buscarCercanos(longitud, latitud, maxDistanciaMetros = 5000) {
-  const db = getDB();
-  return await db.collection(COLLECTION).find({
-    direccion: {
-      $near: {
-        $geometry: { type: 'Point', coordinates: [longitud, latitud] },
-        $maxDistance: maxDistanciaMetros
-      }
-    }
-  }).toArray();
-}
-
-/**
- * Búsqueda por texto en nombre y descripción.
- */
-async function buscarPorTexto(texto, limit = 10) {
-  const db = getDB();
-  return await db.collection(COLLECTION)
-    .find(
-      { $text: { $search: texto } },
-      { projection: { score: { $meta: 'textScore' } } }
-    )
-    .sort({ score: { $meta: 'textScore' } })
-    .limit(limit)
-    .toArray();
-}
-
-/**
- * Actualizar un restaurante.
- */
-async function actualizarRestaurante(id, datos) {
-  const db = getDB();
-  const updateFields = {};
-  if (datos.nombre) updateFields.nombre = datos.nombre;
-  if (datos.descripcion) updateFields.descripcion = datos.descripcion;
-  if (datos.categoria) updateFields.categoria = datos.categoria;
-  if (datos.telefono) updateFields.telefono = datos.telefono;
-  if (datos.email_contacto) updateFields.email_contacto = datos.email_contacto;
-  if (datos.activo !== undefined) updateFields.activo = datos.activo;
-  if (datos.longitud && datos.latitud) {
-    updateFields.direccion = {
-      type: 'Point',
-      coordinates: [parseFloat(datos.longitud), parseFloat(datos.latitud)]
-    };
+async function crearRestaurante(req, res) {
+  try {
+    const result = await service.crearRestaurante(req.body);
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
-
-  const result = await db.collection(COLLECTION).updateOne(
-    { _id: new ObjectId(id) },
-    { $set: updateFields }
-  );
-  return result;
 }
 
-/**
- * Actualizar varios restaurantes (por ej., desactivar por categoría).
- */
-async function actualizarVariosRestaurantes(filtro, datos) {
-  const db = getDB();
-  const result = await db.collection(COLLECTION).updateMany(filtro, { $set: datos });
-  return result;
+async function listarRestaurantes(req, res) {
+  try {
+    const { skip, limit, categoria, sort_field, sort_order } = req.query;
+    const options = {
+      skip: parseInt(skip) || 0,
+      limit: parseInt(limit) || 10
+    };
+    if (categoria) options.filtro = { categoria };
+    if (sort_field) options.sort = { [sort_field]: parseInt(sort_order) || -1 };
+    const result = await service.listarRestaurantes(options);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 }
 
-/**
- * Eliminar un restaurante.
- */
-async function eliminarRestaurante(id) {
-  const db = getDB();
-  const result = await db.collection(COLLECTION).deleteOne({ _id: new ObjectId(id) });
-  return result;
+async function buscarCercanos(req, res) {
+  try {
+    const { longitud, latitud, distancia } = req.query;
+    const result = await service.buscarCercanos(
+      parseFloat(longitud), parseFloat(latitud), parseInt(distancia) || 5000
+    );
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 }
 
-/**
- * Eliminar varios restaurantes (por filtro).
- */
-async function eliminarVariosRestaurantes(filtro) {
-  const db = getDB();
-  const result = await db.collection(COLLECTION).deleteMany(filtro);
-  return result;
+async function buscarPorTexto(req, res) {
+  try {
+    const { texto, limit } = req.query;
+    const result = await service.buscarPorTexto(texto, parseInt(limit) || 10);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 }
 
-/**
- * Listar restaurantes por categoría.
- */
-async function listarPorCategoria(categoria, skip = 0, limit = 10) {
-  const db = getDB();
-  return await db.collection(COLLECTION)
-    .find({ categoria, activo: true })
-    .sort({ rating_promedio: -1 })
-    .skip(skip)
-    .limit(limit)
-    .toArray();
+async function obtenerCategorias(req, res) {
+  try {
+    const result = await service.obtenerCategorias();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 }
 
-/**
- * Contar restaurantes (agregación simple).
- */
-async function contarRestaurantes(filtro = {}) {
-  const db = getDB();
-  return await db.collection(COLLECTION).countDocuments(filtro);
+async function obtenerRestaurante(req, res) {
+  try {
+    const result = await service.obtenerRestaurante(req.params.id);
+    if (!result) return res.status(404).json({ error: 'No encontrado' });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 }
 
-/**
- * Obtener categorías distintas (agregación simple).
- */
-async function obtenerCategorias() {
-  const db = getDB();
-  return await db.collection(COLLECTION).distinct('categoria');
+async function actualizarRestaurante(req, res) {
+  try {
+    const result = await service.actualizarRestaurante(req.params.id, req.body);
+    res.json({ modificados: result.modifiedCount });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
+
+async function eliminarRestaurante(req, res) {
+  try {
+    const result = await service.eliminarRestaurante(req.params.id);
+    res.json({ eliminados: result.deletedCount });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 }
 
 module.exports = {
   crearRestaurante,
-  obtenerRestaurante,
   listarRestaurantes,
   buscarCercanos,
   buscarPorTexto,
+  obtenerCategorias,
+  obtenerRestaurante,
   actualizarRestaurante,
-  actualizarVariosRestaurantes,
-  eliminarRestaurante,
-  eliminarVariosRestaurantes,
-  listarPorCategoria,
-  contarRestaurantes,
-  obtenerCategorias
+  eliminarRestaurante
 };

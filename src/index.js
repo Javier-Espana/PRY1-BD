@@ -1,10 +1,3 @@
-/**
- * Punto de entrada principal del sistema.
- * 
- * Modo API:     node src/index.js api
- * Modo Consola: node src/index.js (o npm start)
- */
-
 require('dotenv').config();
 const { connectDB, closeDB } = require('./config/database');
 const { initCollections } = require('./models');
@@ -13,23 +6,24 @@ const MODE = process.argv[2] || 'console';
 
 async function startAPI() {
   const express = require('express');
+  const path = require('path');
   const app = express();
   const PORT = process.env.PORT || 3000;
 
   app.use(express.json());
+  app.use(express.static(path.join(__dirname, '..', 'public')));
 
-  // Rutas
   app.use('/api/restaurantes', require('./routes/restaurants'));
   app.use('/api/usuarios', require('./routes/users'));
   app.use('/api/menu', require('./routes/menuItems'));
   app.use('/api/ordenes', require('./routes/orders'));
   app.use('/api/resenas', require('./routes/reviews'));
   app.use('/api/analiticas', require('./routes/analytics'));
+  app.use('/api/bulk', require('./routes/bulk'));
 
-  // Ruta raíz
-  app.get('/', (req, res) => {
+  app.get('/api', (req, res) => {
     res.json({
-      nombre: 'Sistema de Gestión de Pedidos y Reseñas',
+      nombre: 'Sistema de Gestion de Pedidos y Resenas',
       version: '1.0.0',
       rutas: {
         restaurantes: '/api/restaurantes',
@@ -37,21 +31,18 @@ async function startAPI() {
         menu: '/api/menu',
         ordenes: '/api/ordenes',
         resenas: '/api/resenas',
-        analiticas: '/api/analiticas'
+        analiticas: '/api/analiticas',
+        bulk: '/api/bulk'
       }
     });
   });
 
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+  });
+
   app.listen(PORT, () => {
-    console.log(`\n🚀 API corriendo en http://localhost:${PORT}`);
-    console.log('📝 Endpoints disponibles:');
-    console.log(`   GET  http://localhost:${PORT}/`);
-    console.log(`   GET  http://localhost:${PORT}/api/restaurantes`);
-    console.log(`   GET  http://localhost:${PORT}/api/usuarios`);
-    console.log(`   GET  http://localhost:${PORT}/api/menu`);
-    console.log(`   GET  http://localhost:${PORT}/api/ordenes`);
-    console.log(`   GET  http://localhost:${PORT}/api/resenas`);
-    console.log(`   GET  http://localhost:${PORT}/api/analiticas/resumen`);
+    console.log(`API corriendo en http://localhost:${PORT}`);
   });
 }
 
@@ -72,15 +63,14 @@ async function main() {
       await closeDB();
     }
   } catch (error) {
-    console.error('❌ Error fatal:', error.message);
+    console.error('Error fatal:', error.message);
     await closeDB();
     process.exit(1);
   }
 }
 
-// Manejo de cierre limpio
 process.on('SIGINT', async () => {
-  console.log('\n👋 Cerrando...');
+  console.log('\nCerrando...');
   await closeDB();
   process.exit(0);
 });

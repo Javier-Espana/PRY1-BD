@@ -1,24 +1,8 @@
-/**
- * Script para crear todos los índices necesarios en las colecciones.
- * 
- * Tipos de índices implementados:
- *   - Simples (email único, etc.)
- *   - Compuestos (restaurante_id + stock, usuario_id + fecha, etc.)
- *   - Multikey (imagenes.file_id en Resenas)
- *   - Geoespacial (2dsphere en Restaurantes)
- *   - Texto (búsqueda full-text en nombre/descripción)
- * 
- * SHARD KEY: Se utiliza order_id (_id de Ordenes) en lugar de restaurant_id,
- * según indicaciones de la catedrática, para mejor distribución de datos.
- * 
- * Uso: npm run indexes
- */
-
-const { connectDB, closeDB, getDB } = require('../config/database');
+﻿const { connectDB, closeDB, getDB } = require('../config/database');
 
 async function createIndexes() {
   const db = await connectDB();
-  console.log('\n📋 Creando índices...\n');
+  console.log('\nCreando índices...\n');
 
   // ============================================================
   // RESTAURANTES
@@ -29,28 +13,28 @@ async function createIndexes() {
     { direccion: '2dsphere' },
     { name: 'idx_restaurantes_geo' }
   );
-  console.log('  ✅ Restaurantes: idx_restaurantes_geo (2dsphere)');
+  console.log('  Restaurantes: idx_restaurantes_geo (2dsphere)');
 
   // Índice compuesto para ranking por rating
   await db.collection('Restaurantes').createIndex(
     { rating_promedio: -1, total_resenas: -1 },
     { name: 'idx_restaurantes_rating' }
   );
-  console.log('  ✅ Restaurantes: idx_restaurantes_rating (compuesto)');
+  console.log('  Restaurantes: idx_restaurantes_rating (compuesto)');
 
   // Índice de texto para búsqueda por nombre y descripción
   await db.collection('Restaurantes').createIndex(
     { nombre: 'text', descripcion: 'text' },
     { name: 'idx_restaurantes_text', default_language: 'spanish' }
   );
-  console.log('  ✅ Restaurantes: idx_restaurantes_text (texto)');
+  console.log('  Restaurantes: idx_restaurantes_text (texto)');
 
   // Índice simple por categoría
   await db.collection('Restaurantes').createIndex(
     { categoria: 1 },
     { name: 'idx_restaurantes_categoria' }
   );
-  console.log('  ✅ Restaurantes: idx_restaurantes_categoria (simple)');
+  console.log('  Restaurantes: idx_restaurantes_categoria (simple)');
 
   // ============================================================
   // USUARIOS
@@ -61,7 +45,7 @@ async function createIndexes() {
     { email: 1 },
     { unique: true, name: 'idx_usuarios_email_unique' }
   );
-  console.log('  ✅ Usuarios: idx_usuarios_email_unique (único)');
+  console.log('  Usuarios: idx_usuarios_email_unique (único)');
 
   // ============================================================
   // ARTÍCULOS DEL MENÚ
@@ -72,21 +56,21 @@ async function createIndexes() {
     { restaurante_id: 1, stock: -1 },
     { name: 'idx_menu_restaurante_stock' }
   );
-  console.log('  ✅ ArticulosMenu: idx_menu_restaurante_stock (compuesto)');
+  console.log('  ArticulosMenu: idx_menu_restaurante_stock (compuesto)');
 
   // Índice compuesto para menú por restaurante + disponible
   await db.collection('ArticulosMenu').createIndex(
     { restaurante_id: 1, disponible: 1 },
     { name: 'idx_menu_restaurante_disponible' }
   );
-  console.log('  ✅ ArticulosMenu: idx_menu_restaurante_disponible (compuesto)');
+  console.log('  ArticulosMenu: idx_menu_restaurante_disponible (compuesto)');
 
   // Índice de texto para búsqueda en artículos
   await db.collection('ArticulosMenu').createIndex(
     { nombre: 'text', descripcion: 'text' },
     { name: 'idx_menu_text', default_language: 'spanish' }
   );
-  console.log('  ✅ ArticulosMenu: idx_menu_text (texto)');
+  console.log('  ArticulosMenu: idx_menu_text (texto)');
 
   // ============================================================
   // ÓRDENES
@@ -97,35 +81,35 @@ async function createIndexes() {
     { usuario_id: 1, fecha_creacion: -1 },
     { name: 'idx_ordenes_usuario_fecha' }
   );
-  console.log('  ✅ Ordenes: idx_ordenes_usuario_fecha (compuesto)');
+  console.log('  Ordenes: idx_ordenes_usuario_fecha (compuesto)');
 
   // Índice compuesto: órdenes por restaurante con fecha
   await db.collection('Ordenes').createIndex(
     { restaurante_id: 1, fecha_creacion: -1 },
     { name: 'idx_ordenes_restaurante_fecha' }
   );
-  console.log('  ✅ Ordenes: idx_ordenes_restaurante_fecha (compuesto)');
+  console.log('  Ordenes: idx_ordenes_restaurante_fecha (compuesto)');
 
   // Índice compuesto: filtrar por estado dentro de restaurante
   await db.collection('Ordenes').createIndex(
     { restaurante_id: 1, estado: 1, fecha_creacion: -1 },
     { name: 'idx_ordenes_restaurante_estado' }
   );
-  console.log('  ✅ Ordenes: idx_ordenes_restaurante_estado (compuesto)');
+  console.log('  Ordenes: idx_ordenes_restaurante_estado (compuesto)');
 
   // Índice simple por estado (para consultas generales)
   await db.collection('Ordenes').createIndex(
     { estado: 1 },
     { name: 'idx_ordenes_estado' }
   );
-  console.log('  ✅ Ordenes: idx_ordenes_estado (simple)');
+  console.log('  Ordenes: idx_ordenes_estado (simple)');
 
   // Índice multikey en items.menu_item_id (para aggregation de platillos más vendidos)
   await db.collection('Ordenes').createIndex(
     { 'items.menu_item_id': 1 },
     { name: 'idx_ordenes_items_menu_item' }
   );
-  console.log('  ✅ Ordenes: idx_ordenes_items_menu_item (multikey)');
+  console.log('  Ordenes: idx_ordenes_items_menu_item (multikey)');
 
   // ============================================================
   // RESEÑAS
@@ -136,30 +120,30 @@ async function createIndexes() {
     { restaurante_id: 1, fecha_creacion: -1 },
     { name: 'idx_resenas_restaurante_fecha' }
   );
-  console.log('  ✅ Resenas: idx_resenas_restaurante_fecha (compuesto)');
+  console.log('  Resenas: idx_resenas_restaurante_fecha (compuesto)');
 
   // Índice único: una reseña por orden
   await db.collection('Resenas').createIndex(
     { orden_id: 1 },
     { unique: true, name: 'idx_resenas_orden_unique' }
   );
-  console.log('  ✅ Resenas: idx_resenas_orden_unique (único)');
+  console.log('  Resenas: idx_resenas_orden_unique (único)');
 
   // Índice multikey en imagenes.file_id
   await db.collection('Resenas').createIndex(
     { 'imagenes.file_id': 1 },
     { name: 'idx_resenas_imagenes_file' }
   );
-  console.log('  ✅ Resenas: idx_resenas_imagenes_file (multikey)');
+  console.log('  Resenas: idx_resenas_imagenes_file (multikey)');
 
   // Índice por usuario (para ver reseñas propias)
   await db.collection('Resenas').createIndex(
     { usuario_id: 1, fecha_creacion: -1 },
     { name: 'idx_resenas_usuario_fecha' }
   );
-  console.log('  ✅ Resenas: idx_resenas_usuario_fecha (compuesto)');
+  console.log('  Resenas: idx_resenas_usuario_fecha (compuesto)');
 
-  console.log('\n✅ Todos los índices creados exitosamente.\n');
+  console.log('\nTodos los índices creados exitosamente.\n');
 }
 
 /**
@@ -202,7 +186,7 @@ async function validateIndexes() {
     .explain('executionStats');
   console.log('  Reseñas por restaurante:', resenasExplain.queryPlanner?.winningPlan?.stage || 'N/A');
 
-  console.log('\n✅ Validación de índices completada.\n');
+  console.log('\nValidación de índices completada.\n');
 }
 
 // Ejecutar si se corre directamente
@@ -212,7 +196,7 @@ if (require.main === module) {
       await createIndexes();
       await validateIndexes();
     } catch (error) {
-      console.error('❌ Error:', error.message);
+      console.error('Error:', error.message);
     } finally {
       await closeDB();
     }

@@ -1,17 +1,13 @@
-/**
- * Menú interactivo de consola para el sistema de gestión.
- * Permite evaluar todas las funcionalidades del proyecto.
- */
-const readlineSync = require('readline-sync');
+﻿const readlineSync = require('readline-sync');
 const { ObjectId } = require('mongodb');
 
-const restaurantCtrl = require('../controllers/restaurantController');
-const userCtrl = require('../controllers/userController');
-const menuItemCtrl = require('../controllers/menuItemController');
-const orderCtrl = require('../controllers/orderController');
-const reviewCtrl = require('../controllers/reviewController');
-const analyticsCtrl = require('../controllers/analyticsController');
-const bulkCtrl = require('../controllers/bulkController');
+const restaurantCtrl = require('../services/restaurantService');
+const userCtrl = require('../services/userService');
+const menuItemCtrl = require('../services/menuItemService');
+const orderCtrl = require('../services/orderService');
+const reviewCtrl = require('../services/reviewService');
+const analyticsCtrl = require('../services/analyticsService');
+const bulkCtrl = require('../services/bulkService');
 
 // ============================================================
 // Utilidades de presentación
@@ -58,7 +54,7 @@ function leerTexto(prompt, obligatorio = false) {
   let val;
   do {
     val = readlineSync.question(`  ${prompt}: `);
-    if (obligatorio && !val) console.log('  ⚠️  Este campo es obligatorio.');
+    if (obligatorio && !val) console.log('  Este campo es obligatorio.');
   } while (obligatorio && !val);
   return val;
 }
@@ -82,17 +78,17 @@ async function menuPrincipal() {
 
   while (!salir) {
     clearScreen();
-    printHeader('🍽️  SISTEMA DE GESTIÓN DE PEDIDOS Y RESEÑAS');
+    printHeader('SISTEMA DE GESTION DE PEDIDOS Y RESENAS');
     console.log('');
-    console.log('  1. 🍽️  Restaurantes');
-    console.log('  2. 👤 Usuarios');
-    console.log('  3. 📝 Artículos del Menú');
-    console.log('  4. 📦 Órdenes');
-    console.log('  5. ⭐ Reseñas');
-    console.log('  6. 📊 Analíticas y Reportes');
-    console.log('  7. 🔧 Operaciones Bulk');
-    console.log('  8. 📋 Resumen del Sistema');
-    console.log('  0. ❌ Salir');
+    console.log('  1. Restaurantes');
+    console.log('  2. Usuarios');
+    console.log('  3. Artículos del Menú');
+    console.log('  4. Órdenes');
+    console.log('  5. Resenas');
+    console.log('  6. Analíticas y Reportes');
+    console.log('  7. Operaciones Bulk');
+    console.log('  8. Resumen del Sistema');
+    console.log('  0. Salir');
     console.log('');
 
     const opcion = readlineSync.question('  Selecciona una opción: ');
@@ -111,7 +107,7 @@ async function menuPrincipal() {
         default: console.log('  Opción no válida.');
       }
     } catch (error) {
-      console.log(`\n  ❌ Error: ${error.message}`);
+      console.log(`\n  Error: ${error.message}`);
       pausar();
     }
   }
@@ -125,7 +121,7 @@ async function menuRestaurantes() {
   let volver = false;
   while (!volver) {
     clearScreen();
-    printHeader('🍽️  RESTAURANTES');
+    printHeader('RESTAURANTES');
     console.log('');
     console.log('  1. Crear restaurante');
     console.log('  2. Listar restaurantes');
@@ -155,7 +151,7 @@ async function menuRestaurantes() {
           const telefono = leerTexto('Teléfono');
           const email_contacto = leerTexto('Email contacto');
           const result = await restaurantCtrl.crearRestaurante({ nombre, descripcion, categoria, latitud, longitud, telefono, email_contacto });
-          console.log('\n  ✅ Restaurante creado:');
+          console.log('\n  Restaurante creado:');
           printDoc(result);
           pausar();
           break;
@@ -166,7 +162,7 @@ async function menuRestaurantes() {
           const limit = leerEntero('Limit', 10);
           const result = await restaurantCtrl.listarRestaurantes({ skip, limit });
           result.forEach((r, i) => {
-            console.log(`  ${i + 1}. ${r.nombre} | ${r.categoria} | ⭐${r.rating_promedio} | ${r.total_resenas} reseñas`);
+            console.log(`  ${i + 1}. ${r.nombre} | ${r.categoria} | ${r.rating_promedio} | ${r.total_resenas} reseñas`);
           });
           pausar();
           break;
@@ -206,7 +202,7 @@ async function menuRestaurantes() {
           const cat = leerTexto('Categoría', true);
           const result = await restaurantCtrl.listarPorCategoria(cat);
           result.forEach((r, i) => {
-            console.log(`  ${i + 1}. ${r.nombre} | ⭐${r.rating_promedio}`);
+            console.log(`  ${i + 1}. ${r.nombre} | ${r.rating_promedio}`);
           });
           pausar();
           break;
@@ -218,14 +214,14 @@ async function menuRestaurantes() {
           const descripcion = leerTexto('Nueva descripción');
           const telefono = leerTexto('Nuevo teléfono');
           const result = await restaurantCtrl.actualizarRestaurante(id, { nombre, descripcion, telefono });
-          console.log(`  ✅ Modificados: ${result.modifiedCount}`);
+          console.log(`  Modificados: ${result.modifiedCount}`);
           pausar();
           break;
         }
         case '8': {
           const id = leerTexto('ID del restaurante', true);
           const result = await restaurantCtrl.eliminarRestaurante(id);
-          console.log(`  ✅ Eliminados: ${result.deletedCount}`);
+          console.log(`  Eliminados: ${result.deletedCount}`);
           pausar();
           break;
         }
@@ -245,7 +241,7 @@ async function menuRestaurantes() {
         default: console.log('  Opción no válida.'); pausar();
       }
     } catch (error) {
-      console.log(`  ❌ Error: ${error.message}`);
+      console.log(`  Error: ${error.message}`);
       pausar();
     }
   }
@@ -259,7 +255,7 @@ async function menuUsuarios() {
   let volver = false;
   while (!volver) {
     clearScreen();
-    printHeader('👤 USUARIOS');
+    printHeader('USUARIOS');
     console.log('');
     console.log('  1. Crear usuario');
     console.log('  2. Listar usuarios');
@@ -283,7 +279,7 @@ async function menuUsuarios() {
           const telefono = leerTexto('Teléfono');
           const rol = leerTexto('Rol (cliente/admin)') || 'cliente';
           const result = await userCtrl.crearUsuario({ nombre, email, password_hash, direccion_principal, telefono, rol });
-          console.log('\n  ✅ Usuario creado:');
+          console.log('\n  Usuario creado:');
           printDoc(result);
           pausar();
           break;
@@ -319,14 +315,14 @@ async function menuUsuarios() {
           const nombre = leerTexto('Nuevo nombre');
           const telefono = leerTexto('Nuevo teléfono');
           const result = await userCtrl.actualizarUsuario(id, { nombre, telefono });
-          console.log(`  ✅ Modificados: ${result.modifiedCount}`);
+          console.log(`  Modificados: ${result.modifiedCount}`);
           pausar();
           break;
         }
         case '6': {
           const id = leerTexto('ID del usuario', true);
           const result = await userCtrl.eliminarUsuario(id);
-          console.log(`  ✅ Eliminados: ${result.deletedCount}`);
+          console.log(`  Eliminados: ${result.deletedCount}`);
           pausar();
           break;
         }
@@ -340,7 +336,7 @@ async function menuUsuarios() {
         default: console.log('  Opción no válida.'); pausar();
       }
     } catch (error) {
-      console.log(`  ❌ Error: ${error.message}`);
+      console.log(`  Error: ${error.message}`);
       pausar();
     }
   }
@@ -354,7 +350,7 @@ async function menuArticulos() {
   let volver = false;
   while (!volver) {
     clearScreen();
-    printHeader('📝 ARTÍCULOS DEL MENÚ');
+    printHeader('ARTÍCULOS DEL MENÚ');
     console.log('');
     console.log('  1. Crear artículo');
     console.log('  2. Ver menú de un restaurante');
@@ -378,7 +374,7 @@ async function menuArticulos() {
           const categoria = leerTexto('Categoría (Entrada/Plato Fuerte/Postre/Bebida/Otro)') || 'Otro';
           const stock = leerEntero('Stock', 100);
           const result = await menuItemCtrl.crearArticulo({ restaurante_id, nombre, descripcion, precio, categoria, stock });
-          console.log('\n  ✅ Artículo creado:');
+          console.log('\n  Artículo creado:');
           printDoc(result);
           pausar();
           break;
@@ -387,7 +383,7 @@ async function menuArticulos() {
           const id = leerTexto('ID del restaurante', true);
           const result = await menuItemCtrl.listarMenuRestaurante(id);
           result.forEach((a, i) => {
-            console.log(`  ${i + 1}. ${a.nombre} | Q${a.precio} | Stock: ${a.stock} | ${a.disponible ? '✅' : '❌'}`);
+            console.log(`  ${i + 1}. ${a.nombre} | Q${a.precio} | Stock: ${a.stock} | ${a.disponible ? '' : ''}`);
           });
           console.log(`\n  Total artículos: ${result.length}`);
           pausar();
@@ -418,14 +414,14 @@ async function menuArticulos() {
           if (precio) datos.precio = parseFloat(precio);
           if (stock) datos.stock = parseInt(stock);
           const result = await menuItemCtrl.actualizarArticulo(id, datos);
-          console.log(`  ✅ Modificados: ${result.modifiedCount}`);
+          console.log(`  Modificados: ${result.modifiedCount}`);
           pausar();
           break;
         }
         case '6': {
           const id = leerTexto('ID del artículo', true);
           const result = await menuItemCtrl.eliminarArticulo(id);
-          console.log(`  ✅ Eliminados: ${result.deletedCount}`);
+          console.log(`  Eliminados: ${result.deletedCount}`);
           pausar();
           break;
         }
@@ -439,7 +435,7 @@ async function menuArticulos() {
         default: console.log('  Opción no válida.'); pausar();
       }
     } catch (error) {
-      console.log(`  ❌ Error: ${error.message}`);
+      console.log(`  Error: ${error.message}`);
       pausar();
     }
   }
@@ -453,7 +449,7 @@ async function menuOrdenes() {
   let volver = false;
   while (!volver) {
     clearScreen();
-    printHeader('📦 ÓRDENES');
+    printHeader('ÓRDENES');
     console.log('');
     console.log('  1. Crear orden (con transacción)');
     console.log('  2. Listar órdenes');
@@ -486,9 +482,9 @@ async function menuOrdenes() {
             agregar = readlineSync.keyInYN('  ¿Agregar otro artículo?');
           }
 
-          console.log('\n  ⏳ Procesando transacción...');
+          console.log('\n  Procesando transacción...');
           const result = await orderCtrl.crearOrden({ usuario_id, restaurante_id, metodo_pago, items });
-          console.log('\n  ✅ Orden creada exitosamente:');
+          console.log('\n  Orden creada exitosamente:');
           console.log(`  ID: ${result.id}`);
           console.log(`  Total: Q${result.total}`);
           console.log(`  Items: ${result.items.length}`);
@@ -552,7 +548,7 @@ async function menuOrdenes() {
           console.log('  Estados: pendiente, preparando, enviado, entregado, cancelado');
           const estado = leerTexto('Nuevo estado', true);
           const result = await orderCtrl.actualizarEstadoOrden(id, estado);
-          console.log(`  ✅ Modificados: ${result.modifiedCount}`);
+          console.log(`  Modificados: ${result.modifiedCount}`);
           pausar();
           break;
         }
@@ -562,7 +558,7 @@ async function menuOrdenes() {
           const menu_item_id = leerTexto('ID del artículo', true);
           const cantidad = leerEntero('Cantidad', 1);
           const result = await orderCtrl.agregarItemAOrden(ordenId, { menu_item_id, cantidad });
-          console.log(`  ✅ Item agregado. Modificados: ${result.modifiedCount}`);
+          console.log(`  Item agregado. Modificados: ${result.modifiedCount}`);
           pausar();
           break;
         }
@@ -571,14 +567,14 @@ async function menuOrdenes() {
           const ordenId = leerTexto('ID de la orden', true);
           const menuItemId = leerTexto('ID del artículo a eliminar', true);
           const result = await orderCtrl.eliminarItemDeOrden(ordenId, menuItemId);
-          console.log(`  ✅ Item eliminado. Modificados: ${result.modifiedCount}`);
+          console.log(`  Item eliminado. Modificados: ${result.modifiedCount}`);
           pausar();
           break;
         }
         case '9': {
           const id = leerTexto('ID de la orden', true);
           const result = await orderCtrl.eliminarOrden(id);
-          console.log(`  ✅ Eliminados: ${result.deletedCount}`);
+          console.log(`  Eliminados: ${result.deletedCount}`);
           pausar();
           break;
         }
@@ -594,7 +590,7 @@ async function menuOrdenes() {
         default: console.log('  Opción no válida.'); pausar();
       }
     } catch (error) {
-      console.log(`  ❌ Error: ${error.message}`);
+      console.log(`  Error: ${error.message}`);
       pausar();
     }
   }
@@ -608,7 +604,7 @@ async function menuResenas() {
   let volver = false;
   while (!volver) {
     clearScreen();
-    printHeader('⭐ RESEÑAS');
+    printHeader('RESENAS');
     console.log('');
     console.log('  1. Crear reseña');
     console.log('  2. Listar reseñas');
@@ -633,7 +629,7 @@ async function menuResenas() {
           const calificacion = leerEntero('Calificación (1-5)', 5);
           const comentario = leerTexto('Comentario');
           const result = await reviewCtrl.crearResena({ usuario_id, orden_id, calificacion, comentario });
-          console.log('\n  ✅ Reseña creada:');
+          console.log('\n  Reseña creada:');
           printDoc(result);
           pausar();
           break;
@@ -643,7 +639,7 @@ async function menuResenas() {
           const limit = leerEntero('Limit', 10);
           const result = await reviewCtrl.listarResenas({ skip, limit });
           result.forEach((r, i) => {
-            console.log(`  ${i + 1}. ⭐${r.calificacion} | ${r.usuario?.nombre || 'N/A'} → ${r.restaurante?.nombre || 'N/A'} | "${(r.comentario || '').substring(0, 40)}..."`);
+            console.log(`  ${i + 1}. ${r.calificacion} | ${r.usuario?.nombre || 'N/A'} → ${r.restaurante?.nombre || 'N/A'} | "${(r.comentario || '').substring(0, 40)}..."`);
           });
           pausar();
           break;
@@ -652,7 +648,7 @@ async function menuResenas() {
           const id = leerTexto('ID del restaurante', true);
           const result = await reviewCtrl.listarResenasPorRestaurante(id);
           result.forEach((r, i) => {
-            console.log(`  ${i + 1}. ⭐${r.calificacion} | ${r.usuario?.nombre || 'N/A'} | "${(r.comentario || '').substring(0, 40)}..."`);
+            console.log(`  ${i + 1}. ${r.calificacion} | ${r.usuario?.nombre || 'N/A'} | "${(r.comentario || '').substring(0, 40)}..."`);
           });
           pausar();
           break;
@@ -661,7 +657,7 @@ async function menuResenas() {
           const id = leerTexto('ID del usuario', true);
           const result = await reviewCtrl.listarResenasPorUsuario(id);
           result.forEach((r, i) => {
-            console.log(`  ${i + 1}. ⭐${r.calificacion} | ${r.restaurante?.nombre || 'N/A'} | "${(r.comentario || '').substring(0, 40)}..."`);
+            console.log(`  ${i + 1}. ${r.calificacion} | ${r.restaurante?.nombre || 'N/A'} | "${(r.comentario || '').substring(0, 40)}..."`);
           });
           pausar();
           break;
@@ -680,7 +676,7 @@ async function menuResenas() {
           const filePath = leerTexto('Ruta del archivo de imagen', true);
           const descripcion = leerTexto('Descripción de la imagen');
           const result = await reviewCtrl.agregarImagenAResena(resenaId, filePath, descripcion);
-          console.log(`\n  ✅ Imagen subida: ${result.filename} (ID: ${result.file_id})`);
+          console.log(`\n  Imagen subida: ${result.filename} (ID: ${result.file_id})`);
           pausar();
           break;
         }
@@ -698,7 +694,7 @@ async function menuResenas() {
           const resenaId = leerTexto('ID de la reseña', true);
           const fileId = leerTexto('ID del archivo a eliminar', true);
           const result = await reviewCtrl.eliminarImagenDeResena(resenaId, fileId);
-          console.log(`  ✅ Imagen eliminada. Modificados: ${result.modifiedCount}`);
+          console.log(`  Imagen eliminada. Modificados: ${result.modifiedCount}`);
           pausar();
           break;
         }
@@ -710,14 +706,14 @@ async function menuResenas() {
           if (calificacion) datos.calificacion = parseInt(calificacion);
           if (comentario) datos.comentario = comentario;
           const result = await reviewCtrl.actualizarResena(id, datos);
-          console.log(`  ✅ Modificados: ${result.modifiedCount}`);
+          console.log(`  Modificados: ${result.modifiedCount}`);
           pausar();
           break;
         }
         case '10': {
           const id = leerTexto('ID de la reseña', true);
           const result = await reviewCtrl.eliminarResena(id);
-          console.log(`  ✅ Eliminados: ${result.deletedCount}`);
+          console.log(`  Eliminados: ${result.deletedCount}`);
           pausar();
           break;
         }
@@ -725,7 +721,7 @@ async function menuResenas() {
         default: console.log('  Opción no válida.'); pausar();
       }
     } catch (error) {
-      console.log(`  ❌ Error: ${error.message}`);
+      console.log(`  Error: ${error.message}`);
       pausar();
     }
   }
@@ -739,7 +735,7 @@ async function menuAnaliticas() {
   let volver = false;
   while (!volver) {
     clearScreen();
-    printHeader('📊 ANALÍTICAS Y REPORTES');
+    printHeader('ANALÍTICAS Y REPORTES');
     console.log('');
     console.log('  1. Restaurantes mejor calificados');
     console.log('  2. Platillos más vendidos');
@@ -758,7 +754,7 @@ async function menuAnaliticas() {
           const limit = leerEntero('Top N', 10);
           const result = await analyticsCtrl.restaurantesMejorCalificados(limit);
           result.forEach((r, i) => {
-            console.log(`  ${i + 1}. ${r.nombre} | ⭐${r.promedio_calificacion} | ${r.total_resenas} reseñas | ${r.categoria}`);
+            console.log(`  ${i + 1}. ${r.nombre} | ${r.promedio_calificacion} | ${r.total_resenas} reseñas | ${r.categoria}`);
           });
           pausar();
           break;
@@ -810,7 +806,7 @@ async function menuAnaliticas() {
           const result = await analyticsCtrl.distribucionCalificaciones(id);
           result.forEach((d) => {
             const bar = '█'.repeat(Math.min(d.total, 50));
-            console.log(`  ⭐${d.calificacion}: ${bar} (${d.total})`);
+            console.log(`  ${d.calificacion}: ${bar} (${d.total})`);
           });
           pausar();
           break;
@@ -819,7 +815,7 @@ async function menuAnaliticas() {
         default: console.log('  Opción no válida.'); pausar();
       }
     } catch (error) {
-      console.log(`  ❌ Error: ${error.message}`);
+      console.log(`  Error: ${error.message}`);
       pausar();
     }
   }
@@ -833,7 +829,7 @@ async function menuBulk() {
   let volver = false;
   while (!volver) {
     clearScreen();
-    printHeader('🔧 OPERACIONES BULK');
+    printHeader('OPERACIONES BULK');
     console.log('');
     console.log('  1. Bulk insert restaurantes');
     console.log('  2. Bulk update estados de órdenes');
@@ -858,7 +854,7 @@ async function menuBulk() {
             });
           }
           const result = await bulkCtrl.bulkInsertRestaurantes(restaurantes);
-          console.log(`  ✅ Insertados: ${result.insertados}`);
+          console.log(`  Insertados: ${result.insertados}`);
           pausar();
           break;
         }
@@ -881,7 +877,7 @@ async function menuBulk() {
               estado: 'preparando'
             }));
             const result = await bulkCtrl.bulkWriteOrdenes(ops);
-            console.log(`  ✅ Actualizados: ${result.actualizados}`);
+            console.log(`  Actualizados: ${result.actualizados}`);
           }
           pausar();
           break;
@@ -890,7 +886,7 @@ async function menuBulk() {
         default: console.log('  Opción no válida.'); pausar();
       }
     } catch (error) {
-      console.log(`  ❌ Error: ${error.message}`);
+      console.log(`  Error: ${error.message}`);
       pausar();
     }
   }
@@ -902,14 +898,14 @@ async function menuBulk() {
 
 async function mostrarResumen() {
   clearScreen();
-  printHeader('📋 RESUMEN DEL SISTEMA');
+  printHeader('RESUMEN DEL SISTEMA');
   const resumen = await analyticsCtrl.resumenGeneral();
   console.log('');
-  console.log(`  🍽️  Restaurantes:     ${resumen.total_restaurantes}`);
-  console.log(`  👤 Usuarios:          ${resumen.total_usuarios}`);
-  console.log(`  📝 Artículos menú:    ${resumen.total_articulos_menu}`);
-  console.log(`  📦 Órdenes:           ${resumen.total_ordenes}`);
-  console.log(`  ⭐ Reseñas:           ${resumen.total_resenas}`);
+  console.log(`  Restaurantes:     ${resumen.total_restaurantes}`);
+  console.log(`  Usuarios:          ${resumen.total_usuarios}`);
+  console.log(`  Articulos menu:    ${resumen.total_articulos_menu}`);
+  console.log(`  Ordenes:           ${resumen.total_ordenes}`);
+  console.log(`  Resenas:           ${resumen.total_resenas}`);
   pausar();
 }
 
