@@ -42,12 +42,12 @@ const orderSchema = {
               description: 'Cantidad >= 1'
             },
             precio_unitario: {
-              bsonType: 'double',
+              bsonType: ['double', 'int', 'long', 'decimal'],
               minimum: 0,
               description: 'Precio unitario al momento de la orden'
             },
             subtotal: {
-              bsonType: 'double',
+              bsonType: ['double', 'int', 'long', 'decimal'],
               minimum: 0,
               description: 'cantidad * precio_unitario'
             }
@@ -61,7 +61,7 @@ const orderSchema = {
         description: 'Estado del pedido'
       },
       total: {
-        bsonType: 'double',
+        bsonType: ['double', 'int', 'long', 'decimal'],
         minimum: 0,
         description: 'Total del pedido > 0'
       },

@@ -18,7 +18,7 @@ const menuItemSchema = {
         bsonType: 'string'
       },
       precio: {
-        bsonType: 'double',
+        bsonType: ['double', 'int', 'long', 'decimal'],
         minimum: 0,
         description: 'Precio > 0'
       },

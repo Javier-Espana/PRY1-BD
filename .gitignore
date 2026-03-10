@@ -1,6 +1,7 @@
 node_modules/
 .env
 .DS_Store
-
+PENDIENTES.md
+GUIA_PENDIENTES_MANUALES.md
 # Documentos de referencia del proyecto (no relevantes para el repo)
 Data para entender que hacer/

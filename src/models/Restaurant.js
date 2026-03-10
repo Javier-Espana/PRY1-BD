@@ -37,7 +37,7 @@ const restaurantSchema = {
             bsonType: 'array',
             minItems: 2,
             maxItems: 2,
-            items: { bsonType: 'double' },
+            items: { bsonType: ['double', 'int', 'long', 'decimal'] },
             description: '[longitud, latitud]'
           }
         },
@@ -50,7 +50,7 @@ const restaurantSchema = {
         bsonType: 'string'
       },
       rating_promedio: {
-        bsonType: 'double',
+        bsonType: ['double', 'int', 'long', 'decimal'],
         minimum: 0,
         maximum: 5,
         description: 'Rating promedio entre 0 y 5'
