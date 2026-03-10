@@ -98,6 +98,32 @@ async function eliminarOrden(req, res) {
   }
 }
 
+async function eliminarVariasOrdenes(req, res) {
+  try {
+    const { filtro } = req.body;
+    if (!filtro || Object.keys(filtro).length === 0) {
+      return res.status(400).json({ error: 'Se requiere un filtro no vacío' });
+    }
+    const result = await service.eliminarVariasOrdenes(filtro);
+    res.json({ eliminados: result.deletedCount });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+async function actualizarVariasOrdenes(req, res) {
+  try {
+    const { filtro, datos } = req.body;
+    if (!filtro || Object.keys(filtro).length === 0) {
+      return res.status(400).json({ error: 'Se requiere un filtro no vacío' });
+    }
+    const result = await service.actualizarVariasOrdenes(filtro, datos);
+    res.json({ modificados: result.modifiedCount });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
+
 module.exports = {
   crearOrden,
   listarOrdenes,
@@ -105,7 +131,9 @@ module.exports = {
   listarOrdenesPorRestaurante,
   obtenerOrden,
   actualizarEstadoOrden,
+  actualizarVariasOrdenes,
   agregarItemAOrden,
   eliminarItemDeOrden,
-  eliminarOrden
+  eliminarOrden,
+  eliminarVariasOrdenes
 };

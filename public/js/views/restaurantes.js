@@ -202,6 +202,7 @@ const RestaurantesView = (() => {
   async function showDetail(id) {
     try {
       const r = await API.restaurantes.obtener(id);
+      const tags = (r.etiquetas || []).map(t => `<span class="badge badge-accent" style="margin-right:4px">${t} <a href="#" class="tag-remove" data-tag="${t}" style="color:var(--danger);text-decoration:none;margin-left:2px">x</a></span>`).join('');
       UI.openModal('Detalle de Restaurante', `
         <div class="detail-list">
           <span class="detail-label">ID</span><span>${r._id}</span>
@@ -212,9 +213,36 @@ const RestaurantesView = (() => {
           <span class="detail-label">Total Resenas</span><span>${r.total_resenas || 0}</span>
           <span class="detail-label">Telefono</span><span>${r.telefono || '-'}</span>
           <span class="detail-label">Email</span><span>${r.email_contacto || '-'}</span>
+          <span class="detail-label">Etiquetas</span><span id="tagContainer">${tags || '<em>Sin etiquetas</em>'}</span>
           <span class="detail-label">Creado</span><span>${UI.formatDate(r.fecha_creacion)}</span>
         </div>
+        <div class="form-row" style="margin-top:12px;align-items:flex-end">
+          <div class="form-group" style="flex:1">
+            <label class="form-label">Agregar etiqueta ($addToSet)</label>
+            <input class="form-control" id="fNewTag" placeholder="Ej: wifi, terraza, pet-friendly">
+          </div>
+          <button class="btn btn-primary btn-sm" id="btnAddTag" style="margin-bottom:12px">Agregar</button>
+        </div>
       `);
+      document.getElementById('btnAddTag')?.addEventListener('click', async () => {
+        const etiqueta = UI.formValue('fNewTag');
+        if (!etiqueta) return UI.toast('Escribe una etiqueta', 'error');
+        try {
+          await API.restaurantes.agregarEtiqueta(id, etiqueta);
+          UI.toast('Etiqueta agregada ($addToSet)', 'success');
+          showDetail(id);
+        } catch (err) { UI.toast(err.message, 'error'); }
+      });
+      document.querySelectorAll('.tag-remove').forEach(el => {
+        el.addEventListener('click', async (e) => {
+          e.preventDefault();
+          try {
+            await API.restaurantes.eliminarEtiqueta(id, el.dataset.tag);
+            UI.toast('Etiqueta eliminada', 'success');
+            showDetail(id);
+          } catch (err) { UI.toast(err.message, 'error'); }
+        });
+      });
     } catch (err) {
       UI.toast(err.message, 'error');
     }

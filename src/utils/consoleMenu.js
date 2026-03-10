@@ -133,6 +133,10 @@ async function menuRestaurantes() {
     console.log('  8. Eliminar restaurante');
     console.log('  9. Contar restaurantes');
     console.log('  10. Ver categorías');
+    console.log('  11. Agregar etiqueta ($addToSet)');
+    console.log('  12. Eliminar etiqueta');
+    console.log('  13. Eliminar varios restaurantes (deleteMany)');
+    console.log('  14. Actualizar varios restaurantes (updateMany)');
     console.log('  0. Volver');
     console.log('');
 
@@ -234,6 +238,64 @@ async function menuRestaurantes() {
         case '10': {
           const cats = await restaurantCtrl.obtenerCategorias();
           console.log('\n  Categorías:', cats.join(', '));
+          pausar();
+          break;
+        }
+        case '11': {
+          printSubHeader('Agregar Etiqueta ($addToSet)');
+          const id = leerTexto('ID del restaurante', true);
+          const etiqueta = leerTexto('Etiqueta a agregar', true);
+          const result = await restaurantCtrl.agregarEtiqueta(id, etiqueta);
+          console.log(`  Modificados: ${result.modifiedCount}`);
+          const rest = await restaurantCtrl.obtenerRestaurante(id);
+          if (rest) console.log(`  Etiquetas actuales: ${(rest.etiquetas || []).join(', ')}`);
+          pausar();
+          break;
+        }
+        case '12': {
+          printSubHeader('Eliminar Etiqueta ($pull de etiquetas)');
+          const id = leerTexto('ID del restaurante', true);
+          const rest = await restaurantCtrl.obtenerRestaurante(id);
+          if (rest) console.log(`  Etiquetas actuales: ${(rest.etiquetas || []).join(', ')}`);
+          const etiqueta = leerTexto('Etiqueta a eliminar', true);
+          const result = await restaurantCtrl.eliminarEtiqueta(id, etiqueta);
+          console.log(`  Modificados: ${result.modifiedCount}`);
+          pausar();
+          break;
+        }
+        case '13': {
+          printSubHeader('Eliminar Varios Restaurantes (deleteMany)');
+          const campo = leerTexto('Campo para filtrar (ej: categoria, activo)', true);
+          const valor = leerTexto('Valor del campo', true);
+          let filtro = {};
+          if (valor === 'true') filtro[campo] = true;
+          else if (valor === 'false') filtro[campo] = false;
+          else filtro[campo] = valor;
+          const count = await restaurantCtrl.contarRestaurantes(filtro);
+          console.log(`  Se encontraron ${count} restaurantes con ese filtro.`);
+          if (count > 0 && readlineSync.keyInYN('  ¿Proceder con la eliminación?')) {
+            const result = await restaurantCtrl.eliminarVariosRestaurantes(filtro);
+            console.log(`  Eliminados: ${result.deletedCount}`);
+          }
+          pausar();
+          break;
+        }
+        case '14': {
+          printSubHeader('Actualizar Varios Restaurantes (updateMany)');
+          const campo = leerTexto('Campo para filtrar (ej: categoria)', true);
+          const valor = leerTexto('Valor del filtro', true);
+          let filtro = {};
+          if (valor === 'true') filtro[campo] = true;
+          else if (valor === 'false') filtro[campo] = false;
+          else filtro[campo] = valor;
+          const campoUpd = leerTexto('Campo a actualizar', true);
+          const valorUpd = leerTexto('Nuevo valor', true);
+          let datos = {};
+          if (valorUpd === 'true') datos[campoUpd] = true;
+          else if (valorUpd === 'false') datos[campoUpd] = false;
+          else datos[campoUpd] = valorUpd;
+          const result = await restaurantCtrl.actualizarVariosRestaurantes(filtro, datos);
+          console.log(`  Modificados: ${result.modifiedCount}`);
           pausar();
           break;
         }
@@ -461,6 +523,8 @@ async function menuOrdenes() {
     console.log('  8. Eliminar item de orden ($pull)');
     console.log('  9. Eliminar orden');
     console.log('  10. Contar órdenes por estado');
+    console.log('  11. Eliminar varias órdenes (deleteMany)');
+    console.log('  12. Actualizar varias órdenes (updateMany)');
     console.log('  0. Volver');
     console.log('');
 
@@ -583,6 +647,33 @@ async function menuOrdenes() {
           const estados = await orderCtrl.obtenerEstados();
           console.log(`\n  Total órdenes: ${total}`);
           console.log(`  Estados: ${estados.join(', ')}`);
+          pausar();
+          break;
+        }
+        case '11': {
+          printSubHeader('Eliminar Varias Órdenes (deleteMany)');
+          console.log('  Estados: pendiente, preparando, enviado, entregado, cancelado');
+          const estado = leerTexto('Estado de las órdenes a eliminar', true);
+          const count = await orderCtrl.contarOrdenes({ estado });
+          console.log(`  Se encontraron ${count} órdenes con estado "${estado}".`);
+          if (count > 0 && readlineSync.keyInYN('  ¿Proceder con la eliminación?')) {
+            const result = await orderCtrl.eliminarVariasOrdenes({ estado });
+            console.log(`  Eliminados: ${result.deletedCount}`);
+          }
+          pausar();
+          break;
+        }
+        case '12': {
+          printSubHeader('Actualizar Varias Órdenes (updateMany)');
+          console.log('  Estados: pendiente, preparando, enviado, entregado, cancelado');
+          const estadoActual = leerTexto('Estado actual (filtro)', true);
+          const nuevoEstado = leerTexto('Nuevo estado', true);
+          const count = await orderCtrl.contarOrdenes({ estado: estadoActual });
+          console.log(`  Se encontraron ${count} órdenes con estado "${estadoActual}".`);
+          if (count > 0 && readlineSync.keyInYN('  ¿Proceder con la actualización?')) {
+            const result = await orderCtrl.actualizarVariasOrdenes({ estado: estadoActual }, { estado: nuevoEstado });
+            console.log(`  Modificados: ${result.modifiedCount}`);
+          }
           pausar();
           break;
         }

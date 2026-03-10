@@ -5,9 +5,13 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
+    "api": "node src/index.js api",
     "seed": "node src/scripts/seedData.js",
     "indexes": "node src/scripts/createIndexes.js",
-    "setup": "npm run indexes && npm run seed"
+    "setup": "npm run indexes && npm run seed",
+    "notablescan": "node src/scripts/configureDB.js enable",
+    "notablescan:off": "node src/scripts/configureDB.js disable",
+    "notablescan:test": "node src/scripts/configureDB.js test"
   },
   "dependencies": {
     "dotenv": "^16.4.7",

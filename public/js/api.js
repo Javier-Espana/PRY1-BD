@@ -35,6 +35,10 @@ const API = (() => {
       crear: (data) => request('POST', '/restaurantes', data),
       actualizar: (id, data) => request('PUT', `/restaurantes/${id}`, data),
       eliminar: (id) => request('DELETE', `/restaurantes/${id}`),
+      eliminarVarios: (filtro) => request('DELETE', '/restaurantes/varios', { filtro }),
+      actualizarVarios: (filtro, datos) => request('PATCH', '/restaurantes/varios', { filtro, datos }),
+      agregarEtiqueta: (id, etiqueta) => request('POST', `/restaurantes/${id}/etiquetas`, { etiqueta }),
+      eliminarEtiqueta: (id, etiqueta) => request('DELETE', `/restaurantes/${id}/etiquetas/${encodeURIComponent(etiqueta)}`),
       cercanos: (params) => request('GET', `/restaurantes/cercanos${qs(params)}`),
       buscar: (params) => request('GET', `/restaurantes/buscar${qs(params)}`),
       categorias: () => request('GET', '/restaurantes/categorias')
@@ -66,9 +70,11 @@ const API = (() => {
       obtener: (id) => request('GET', `/ordenes/${id}`),
       crear: (data) => request('POST', '/ordenes', data),
       actualizarEstado: (id, estado) => request('PATCH', `/ordenes/${id}/estado`, { estado }),
+      actualizarVarios: (filtro, datos) => request('PATCH', '/ordenes/varios', { filtro, datos }),
       agregarItem: (id, item) => request('POST', `/ordenes/${id}/items`, item),
       eliminarItem: (id, menuItemId) => request('DELETE', `/ordenes/${id}/items/${menuItemId}`),
       eliminar: (id) => request('DELETE', `/ordenes/${id}`),
+      eliminarVarios: (filtro) => request('DELETE', '/ordenes/varios', { filtro }),
       porUsuario: (userId, params = {}) => request('GET', `/ordenes/usuario/${userId}${qs(params)}`),
       porRestaurante: (restId, params = {}) => request('GET', `/ordenes/restaurante/${restId}${qs(params)}`)
     },

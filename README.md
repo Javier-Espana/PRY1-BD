@@ -1,46 +1,48 @@
-# 🍕 Sistema de Gestión de Pedidos y Reseñas de Restaurantes
+# Sistema de Gestion de Pedidos y Resenas de Restaurantes
 
 Proyecto 1 — CC3089 Base de Datos 2, Sección 20  
 Universidad del Valle de Guatemala  
 Catedrática: Daniela Mesalles
 
-## 👥 Equipo
+## Equipo
 
 | Nombre | Carné |
 |--------|-------|
 | Roberto Barreda | 23354 |
-| Javier España | 23 |
+| Javier España | 23361 |
 | Diego López | 23747 |
 
 ---
 
-## 📖 Descripción
+## Descripcion
 
-Sistema backend para gestionar pedidos y reseñas de restaurantes usando **MongoDB**. Incluye:
+Sistema completo para gestionar pedidos y resenas de restaurantes usando **MongoDB**. Incluye:
 
-- **5 colecciones** con validación JSON Schema
+- **5 colecciones** con validacion JSON Schema
 - CRUD completo para todas las entidades
 - Documentos embebidos y referenciados
 - Transacciones multi-documento
-- Consultas geoespaciales y búsqueda de texto
-- GridFS para almacenamiento de imágenes
+- Consultas geoespaciales y busqueda de texto
+- GridFS para almacenamiento de imagenes
 - Aggregation pipelines complejas
 - Operaciones bulk (bulkWrite)
-- Más de 55,000 documentos de prueba
+- Mas de 55,000 documentos de prueba
 - Interfaz de consola interactiva + API REST
+- **Frontend SPA** (Single Page Application) con dark theme
 
 ---
 
-## 🛠 Tecnologías
+## Tecnologias
 
 - **Node.js** + **Express**
-- **MongoDB** (driver nativo)
+- **MongoDB** (driver nativo v6.13)
 - **GridFS** para archivos
 - **MongoDB Atlas** (recomendado)
+- **Frontend**: Vanilla JS SPA (sin frameworks), CSS custom properties, dark theme
 
 ---
 
-## 🚀 Instalación y uso
+## Instalacion y uso
 
 ### Requisitos previos
 
@@ -73,73 +75,38 @@ PORT=3000
 ### Ejecutar
 
 ```bash
-# Modo consola (menú interactivo - recomendado para demo)
+# Modo consola (menu interactivo - recomendado para demo)
 npm start
 
-# Modo API REST (Express en puerto 3000)
-npm start api
+# Modo API REST + Frontend (Express en puerto 3000)
+npm run api
 
-# Solo seed de datos (crea colecciones + índices + datos de prueba)
+# Solo seed de datos (crea colecciones + indices + datos de prueba)
 npm run seed
 
-# Solo crear índices
+# Solo crear indices
 npm run indexes
 
-# Setup completo (colecciones + índices)
+# Setup completo (colecciones + indices)
 npm run setup
+
+# Configurar notablescan (rechazar queries sin indice)
+npm run notablescan
+
+# Desactivar notablescan
+npm run notablescan:off
+
+# Probar que notablescan funciona
+npm run notablescan:test
 ```
 
 ---
 
-## 📂 Estructura del proyecto
-
-```
-PRY1-BD/
-├── package.json
-├── .env.example
-├── .gitignore
-├── PENDIENTES.md          # Tareas pendientes por miembro
-├── README.md              # Este archivo
-├── src/
-│   ├── index.js           # Punto de entrada
-│   ├── config/
-│   │   └── database.js    # Conexión MongoDB + GridFS
-│   ├── models/
-│   │   ├── index.js       # Inicializador de colecciones con validación
-│   │   ├── Restaurant.js  # Schema: Restaurantes
-│   │   ├── User.js        # Schema: Usuarios
-│   │   ├── MenuItem.js    # Schema: ArticulosMenu
-│   │   ├── Order.js       # Schema: Ordenes
-│   │   └── Review.js      # Schema: Resenas
-│   ├── controllers/
-│   │   ├── restaurantController.js   # CRUD + geoespacial + texto
-│   │   ├── userController.js         # CRUD usuarios
-│   │   ├── menuItemController.js     # CRUD + insertMany
-│   │   ├── orderController.js        # CRUD + transacción + arrays
-│   │   ├── reviewController.js       # CRUD + GridFS + arrays
-│   │   ├── analyticsController.js    # Aggregation pipelines
-│   │   └── bulkController.js         # Operaciones bulkWrite
-│   ├── routes/
-│   │   ├── restaurants.js
-│   │   ├── users.js
-│   │   ├── menuItems.js
-│   │   ├── orders.js
-│   │   ├── reviews.js
-│   │   └── analytics.js
-│   ├── scripts/
-│   │   ├── createIndexes.js   # Índices + validación con explain()
-│   │   └── seedData.js        # Generador de 55,000+ documentos
-│   └── utils/
-│       └── consoleMenu.js     # Menú interactivo de consola
-```
-
----
-
-## 🗄 Modelo de datos
+## Modelo de datos
 
 ### Colecciones
 
-| Colección | Descripción | Documentos seed |
+| Coleccion | Descripcion | Documentos seed |
 |-----------|-------------|-----------------|
 | **Restaurantes** | Datos del restaurante, ubicación GeoJSON | 25 |
 | **Usuarios** | Clientes y administradores | 200 |
@@ -151,9 +118,9 @@ PRY1-BD/
 
 Se utiliza **`order_id`** (el `_id` de la colección Ordenes) como shard key, según indicación de la catedrática.
 
-### Índices implementados
+### Indices implementados
 
-| Tipo | Colección | Campo(s) |
+| Tipo | Coleccion | Campo(s) |
 |------|-----------|----------|
 | 2dsphere | Restaurantes | `direccion.coordenadas` |
 | Text | Restaurantes | `nombre`, `descripcion` |
@@ -170,58 +137,148 @@ Se utiliza **`order_id`** (el `_id` de la colección Ordenes) como shard key, se
 
 ---
 
-## 📡 API REST
+## API REST
 
 Base URL: `http://localhost:3000/api`
 
-| Método | Endpoint | Descripción |
+### Restaurantes (12 endpoints)
+| Metodo | Endpoint | Descripcion |
 |--------|----------|-------------|
-| GET | `/restaurantes` | Listar restaurantes |
+| GET | `/restaurantes` | Listar (paginado) |
 | POST | `/restaurantes` | Crear restaurante |
-| GET | `/restaurantes/:id` | Obtener restaurante |
-| PUT | `/restaurantes/:id` | Actualizar restaurante |
-| DELETE | `/restaurantes/:id` | Eliminar restaurante |
-| GET | `/restaurantes/cercanos` | Búsqueda geoespacial |
-| GET | `/restaurantes/buscar` | Búsqueda por texto |
-| GET | `/usuarios` | Listar usuarios |
-| POST | `/usuarios` | Crear usuario |
-| GET | `/ordenes` | Listar órdenes |
-| POST | `/ordenes` | Crear orden (con transacción) |
-| PUT | `/ordenes/:id/items` | Agregar ítem ($push) |
-| DELETE | `/ordenes/:id/items/:itemId` | Eliminar ítem ($pull) |
-| GET | `/resenas` | Listar reseñas |
-| POST | `/resenas` | Crear reseña |
+| GET | `/restaurantes/cercanos` | Busqueda geoespacial (2dsphere) |
+| GET | `/restaurantes/buscar` | Busqueda full-text |
+| GET | `/restaurantes/categorias` | Categorias distintas |
+| PATCH | `/restaurantes/varios` | updateMany con filtro |
+| DELETE | `/restaurantes/varios` | deleteMany con filtro |
+| GET | `/restaurantes/:id` | Obtener por ID |
+| PUT | `/restaurantes/:id` | Actualizar |
+| DELETE | `/restaurantes/:id` | Eliminar |
+| POST | `/restaurantes/:id/etiquetas` | Agregar etiqueta ($addToSet) |
+| DELETE | `/restaurantes/:id/etiquetas/:etiqueta` | Eliminar etiqueta |
+
+### Usuarios (5 endpoints)
+| Metodo | Endpoint | Descripcion |
+|--------|----------|-------------|
+| GET | `/usuarios` | Listar |
+| POST | `/usuarios` | Crear |
+| GET | `/usuarios/:id` | Obtener |
+| PUT | `/usuarios/:id` | Actualizar |
+| DELETE | `/usuarios/:id` | Eliminar |
+
+### Articulos Menu (7 endpoints)
+| Metodo | Endpoint | Descripcion |
+|--------|----------|-------------|
+| GET | `/menu/restaurante/:id` | Menu por restaurante |
+| POST | `/menu` | Crear articulo |
+| POST | `/menu/varios` | insertMany |
+| GET | `/menu/buscar` | Busqueda full-text |
+| GET | `/menu/:id` | Obtener |
+| PUT | `/menu/:id` | Actualizar |
+| DELETE | `/menu/:id` | Eliminar |
+
+### Ordenes (11 endpoints)
+| Metodo | Endpoint | Descripcion |
+|--------|----------|-------------|
+| GET | `/ordenes` | Listar (filtro por estado) |
+| POST | `/ordenes` | Crear con transaccion multi-documento |
+| GET | `/ordenes/usuario/:id` | Por usuario |
+| GET | `/ordenes/restaurante/:id` | Por restaurante |
+| PATCH | `/ordenes/varios` | updateMany con filtro |
+| DELETE | `/ordenes/varios` | deleteMany con filtro |
+| GET | `/ordenes/:id` | Obtener con $lookup |
+| PATCH | `/ordenes/:id/estado` | Actualizar estado |
+| POST | `/ordenes/:id/items` | Agregar item ($push) |
+| DELETE | `/ordenes/:id/items/:itemId` | Eliminar item ($pull) |
+| DELETE | `/ordenes/:id` | Eliminar |
+
+### Resenas (11 endpoints)
+| Metodo | Endpoint | Descripcion |
+|--------|----------|-------------|
+| GET | `/resenas` | Listar |
+| POST | `/resenas` | Crear |
+| GET | `/resenas/restaurante/:id` | Por restaurante |
+| GET | `/resenas/usuario/:id` | Por usuario |
+| GET | `/resenas/archivos` | Listar archivos GridFS |
+| GET | `/resenas/archivos/:fileId` | Descargar archivo |
+| GET | `/resenas/:id` | Obtener |
 | POST | `/resenas/:id/imagenes` | Subir imagen (GridFS) |
-| GET | `/analytics/top-restaurantes` | Mejores restaurantes |
-| GET | `/analytics/platillos-vendidos` | Platillos más vendidos |
-| GET | `/analytics/ventas-restaurante` | Ventas por restaurante |
-| GET | `/analytics/ventas-periodo` | Ventas por período |
+| DELETE | `/resenas/:id/imagenes/:fileId` | Eliminar imagen |
+| PUT | `/resenas/:id` | Actualizar |
+| DELETE | `/resenas/:id` | Eliminar |
+
+### Analiticas (7 endpoints)
+| Metodo | Endpoint | Descripcion |
+|--------|----------|-------------|
+| GET | `/analiticas/resumen` | Conteos generales |
+| GET | `/analiticas/restaurantes-mejor-calificados` | Top por calificacion |
+| GET | `/analiticas/platillos-mas-vendidos` | Mas vendidos ($unwind + $group) |
+| GET | `/analiticas/ventas-por-restaurante` | Ventas agrupadas |
+| GET | `/analiticas/ventas-por-periodo` | Ventas por dia/semana/mes |
+| GET | `/analiticas/ordenes-por-estado` | Conteo por estado |
+| GET | `/analiticas/distribucion-calificaciones/:id` | Distribucion por restaurante |
+
+### Bulk (3 endpoints)
+| Metodo | Endpoint | Descripcion |
+|--------|----------|-------------|
+| POST | `/bulk/articulos` | bulkWrite ArticulosMenu |
+| POST | `/bulk/ordenes` | bulkWrite Ordenes |
+| POST | `/bulk/restaurantes` | Bulk insert restaurantes |
 
 ---
 
-## 🎯 Funcionalidades implementadas
+## Frontend SPA
 
-- [x] Mínimo 5 colecciones con JSON Schema validation
+Al ejecutar `npm run api`, el frontend esta disponible en `http://localhost:3000`.
+
+**Caracteristicas:**
+- Dark theme con CSS custom properties
+- Navegacion hash-based (sin recarga de pagina)
+- Sidebar responsiva con menu toggle para movil
+- Sistema de modales para crear/editar/detallar recursos
+- Notificaciones toast
+- Paginacion en todas las listas
+- Graficos de barras CSS para analytics
+
+**Vistas:**
+| Vista | Funcionalidad |
+|-------|---------------|
+| Dashboard | Stats generales + top restaurantes + top platillos + ordenes por estado |
+| Restaurantes | CRUD + busqueda texto + busqueda geoespacial (cercanos) |
+| Usuarios | CRUD completo |
+| Articulos Menu | CRUD por restaurante + busqueda texto |
+| Ordenes | CRUD + transaccion multi-documento + filtro estado + items dinamicos |
+| Resenas | CRUD + subida imagenes GridFS + listado archivos |
+| Analiticas | 6 tabs con aggregation pipelines y graficos |
+| Bulk | Bulk insert restaurantes + bulk update ordenes |
+
+---
+
+## Funcionalidades implementadas
+
+- [x] Minimo 5 colecciones con JSON Schema validation
 - [x] CRUD completo (insert, find, update, delete)
 - [x] Documentos embebidos (items en Ordenes)
 - [x] Documentos referenciados (todas las relaciones)
 - [x] insertMany / updateMany / deleteMany
 - [x] Filtros, proyecciones, ordenamiento, skip, limit
 - [x] count, distinct
-- [x] $lookup (joins multi-colección)
+- [x] $lookup (joins multi-coleccion)
 - [x] Manejo de arrays ($push, $pull, $addToSet)
-- [x] Índices: simple, compuesto, multikey, 2dsphere, text, unique
-- [x] Validación de índices con explain()
-- [x] Transacción multi-documento
+- [x] Indices: simple, compuesto, multikey, 2dsphere, text, unique
+- [x] Validacion de indices con explain()
+- [x] Transaccion multi-documento
 - [x] GridFS (subir, descargar, eliminar archivos)
 - [x] Aggregation pipelines ($group, $match, $sort, $lookup, $unwind, $project)
 - [x] Operaciones Bulk (bulkWrite)
 - [x] Seed con 55,000+ documentos
-- [x] Menú interactivo de consola
-- [x] API REST con Express
+- [x] Menu interactivo de consola
+- [x] API REST con Express (56 endpoints)
+- [x] Frontend SPA con dark theme
+- [x] Configuracion notablescan
 
 ---
 
-## 📅 Fecha de entrega
+## Fecha de entrega
 
 **Martes 10 de marzo de 2026, 18:59 hrs**

@@ -1,16 +1,16 @@
-# 📋 TAREAS PENDIENTES - Proyecto 1 MongoDB
+﻿# TAREAS PENDIENTES - Proyecto 1 MongoDB
 
 Este documento lista las tareas que faltan por completar para que cada miembro del equipo contribuya con commits propios.
 
 ---
 
-## ⚠️ IMPORTANTE: Cambio de Shard Key
+## IMPORTANTE: Cambio de Shard Key
 
 Según indicaciones de la catedrática, se cambió la **shard key** de `restaurant_id` a **`order_id`** (el `_id` de la colección Órdenes). Esto ya está reflejado en el código y en los comentarios del modelo `Order.js`.
 
 ---
 
-## 🔧 Tareas por completar
+## Tareas por completar
 
 ### 1. Configurar `.env` con credenciales de MongoDB Atlas (Roberto)
 - [ ] Crear el archivo `.env` basándose en `.env.example`
@@ -31,10 +31,8 @@ Según indicaciones de la catedrática, se cambió la **shard key** de `restaura
 - [ ] Agregar los screenshots al documento de diseño o a una carpeta `docs/`
 
 ### 4. Configurar la base de datos para rechazar queries sin índice (Diego)
-- [ ] Ejecutar en MongoDB Shell o Atlas:
-  ```js
-  db.adminCommand({ setParameter: 1, notablescan: 1 })
-  ```
+- [ ] Ejecutar `npm run notablescan` (o en MongoDB Shell: `db.adminCommand({ setParameter: 1, notablescan: 1 })`)
+- [ ] Ejecutar `npm run notablescan:test` para verificar que funciona
 - [ ] Verificar que consultas sin índice son rechazadas
 - [ ] Documentar con screenshot
 
@@ -81,11 +79,13 @@ Según indicaciones de la catedrática, se cambió la **shard key** de `restaura
   - [ ] Operaciones bulk
   - [ ] Validación de índices con explain()
 
-### 10. Frontend (EXTRA - hasta 10 pts) (a decidir)
-- [ ] Si se decide hacer frontend, implementar interfaz web
-- [ ] Opciones: React, Vue, o cualquier framework
-- [ ] Conectar con la API Express existente
-- [ ] **NOTA**: Si se hace frontend, la evaluación se basa en esa interfaz
+### 10. Frontend (EXTRA - hasta 10 pts) -- YA IMPLEMENTADO
+- [x] Frontend SPA implementado en `public/`
+- [x] Dark theme, vanilla JS, hash-based routing
+- [x] 8 vistas: Dashboard, Restaurantes, Usuarios, Menu, Ordenes, Resenas, Analiticas, Bulk
+- [x] Todas las operaciones CRUD desde el frontend
+- [x] Conectado a la API Express existente
+- [x] GridFS upload, transacciones, aggregation pipelines desde UI
 
 ### 11. Mongo Charts (EXTRA - hasta 5 pts) (a decidir)
 - [ ] Configurar Mongo Charts en Atlas
@@ -104,7 +104,7 @@ Según indicaciones de la catedrática, se cambió la **shard key** de `restaura
 
 ---
 
-## 📂 Estructura del proyecto
+## Estructura del proyecto
 
 ```
 PRY1-BD/
@@ -146,7 +146,7 @@ PRY1-BD/
 
 ---
 
-## 🚀 Cómo empezar
+## Como empezar
 
 ```bash
 # 1. Instalar dependencias (ya instaladas)
@@ -165,31 +165,32 @@ npm start api      # Modo API (Express en puerto 3000)
 
 ---
 
-## ✅ Lo que ya está implementado
+## Lo que ya esta implementado
 
 | Aspecto | Estado | Ubicación |
 |---------|--------|-----------|
-| Modelos con validación JSON Schema | ✅ | `src/models/` |
-| CRUD completo (todas las colecciones) | ✅ | `src/controllers/` |
-| Documentos embebidos (items en Ordenes) | ✅ | `orderController.js` |
-| Documentos referenciados (todas las relaciones) | ✅ | Todos los controllers |
-| Índices (simple, compuesto, multikey, geo, texto) | ✅ | `createIndexes.js` |
-| Transacción multi-documento | ✅ | `orderController.crearOrden()` |
-| Aggregation pipelines complejas | ✅ | `analyticsController.js` |
-| GridFS para archivos | ✅ | `reviewController.js` |
-| Manejo de arrays ($push, $pull, $addToSet) | ✅ | `orderController.js`, `reviewController.js` |
-| Operaciones Bulk (bulkWrite) | ✅ | `bulkController.js` |
-| Seed 55,000+ documentos | ✅ | `seedData.js` |
-| Filtros, proyecciones, sort, skip, limit | ✅ | Todos los controllers |
-| Lookups multi-colección | ✅ | `orderController.js`, `reviewController.js` |
-| count, distinct | ✅ | Todos los controllers |
-| Menú de consola interactivo | ✅ | `consoleMenu.js` |
-| API REST Express | ✅ | `src/routes/` |
-| Shard key: order_id (cambio solicitado) | ✅ | `Order.js` |
+| Modelos con validación JSON Schema | SI | `src/models/` |
+| CRUD completo (todas las colecciones) | SI | `src/controllers/` |
+| Documentos embebidos (items en Ordenes) | SI | `orderController.js` |
+| Documentos referenciados (todas las relaciones) | SI | Todos los controllers |
+| Índices (simple, compuesto, multikey, geo, texto) | SI | `createIndexes.js` |
+| Transacción multi-documento | SI | `orderController.crearOrden()` |
+| Aggregation pipelines complejas | SI | `analyticsController.js` |
+| GridFS para archivos | SI | `reviewController.js` |
+| Manejo de arrays ($push, $pull, $addToSet) | SI | `orderService.js`, `reviewService.js`, `restaurantService.js` |
+| Operaciones Bulk (bulkWrite) | SI | `bulkController.js` |
+| insertMany, updateMany, deleteMany | SI | `menuItemService.js`, `orderService.js`, `restaurantService.js` (expuestos via API) |
+| Seed 55,000+ documentos | SI | `seedData.js` |
+| Filtros, proyecciones, sort, skip, limit | SI | Todos los controllers |
+| Lookups multi-colección | SI | `orderController.js`, `reviewController.js` |
+| count, distinct | SI | Todos los controllers |
+| Menú de consola interactivo | SI | `consoleMenu.js` |
+| API REST Express | SI | `src/routes/` |
+| Shard key: order_id (cambio solicitado) | SI | `Order.js` |
 
 ---
 
-## 📝 Notas importantes
+## Notas importantes
 
 1. **Shard Key**: Se usa `order_id` (el `_id` de Ordenes) como shard key en lugar de `restaurant_id`, según indicación de la catedrática.
 

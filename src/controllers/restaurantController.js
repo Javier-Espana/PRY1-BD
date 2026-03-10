@@ -84,6 +84,52 @@ async function eliminarRestaurante(req, res) {
   }
 }
 
+async function eliminarVariosRestaurantes(req, res) {
+  try {
+    const { filtro } = req.body;
+    if (!filtro || Object.keys(filtro).length === 0) {
+      return res.status(400).json({ error: 'Se requiere un filtro no vacío' });
+    }
+    const result = await service.eliminarVariosRestaurantes(filtro);
+    res.json({ eliminados: result.deletedCount });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+async function actualizarVariosRestaurantes(req, res) {
+  try {
+    const { filtro, datos } = req.body;
+    if (!filtro || Object.keys(filtro).length === 0) {
+      return res.status(400).json({ error: 'Se requiere un filtro no vacío' });
+    }
+    const result = await service.actualizarVariosRestaurantes(filtro, datos);
+    res.json({ modificados: result.modifiedCount });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
+
+async function agregarEtiqueta(req, res) {
+  try {
+    const { etiqueta } = req.body;
+    if (!etiqueta) return res.status(400).json({ error: 'Se requiere etiqueta' });
+    const result = await service.agregarEtiqueta(req.params.id, etiqueta);
+    res.json({ modificados: result.modifiedCount });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
+
+async function eliminarEtiqueta(req, res) {
+  try {
+    const result = await service.eliminarEtiqueta(req.params.id, req.params.etiqueta);
+    res.json({ modificados: result.modifiedCount });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
+
 module.exports = {
   crearRestaurante,
   listarRestaurantes,
@@ -92,5 +138,9 @@ module.exports = {
   obtenerCategorias,
   obtenerRestaurante,
   actualizarRestaurante,
-  eliminarRestaurante
+  actualizarVariosRestaurantes,
+  eliminarRestaurante,
+  eliminarVariosRestaurantes,
+  agregarEtiqueta,
+  eliminarEtiqueta
 };

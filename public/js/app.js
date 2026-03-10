@@ -39,11 +39,6 @@
 
   toggle.addEventListener('click', () => sidebar.classList.toggle('open'));
 
-  document.getElementById('modalClose').addEventListener('click', UI.closeModal);
-  document.getElementById('modalOverlay').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) UI.closeModal();
-  });
-
   window.addEventListener('hashchange', navigate);
   navigate();
 })();

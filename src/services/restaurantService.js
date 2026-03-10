@@ -101,6 +101,22 @@ async function eliminarVariosRestaurantes(filtro) {
   return await db.collection(COLLECTION).deleteMany(filtro);
 }
 
+async function agregarEtiqueta(id, etiqueta) {
+  const db = getDB();
+  return await db.collection(COLLECTION).updateOne(
+    { _id: new ObjectId(id) },
+    { $addToSet: { etiquetas: etiqueta } }
+  );
+}
+
+async function eliminarEtiqueta(id, etiqueta) {
+  const db = getDB();
+  return await db.collection(COLLECTION).updateOne(
+    { _id: new ObjectId(id) },
+    { $pull: { etiquetas: etiqueta } }
+  );
+}
+
 async function listarPorCategoria(categoria, skip = 0, limit = 10) {
   const db = getDB();
   return await db.collection(COLLECTION)
@@ -131,6 +147,8 @@ module.exports = {
   actualizarVariosRestaurantes,
   eliminarRestaurante,
   eliminarVariosRestaurantes,
+  agregarEtiqueta,
+  eliminarEtiqueta,
   listarPorCategoria,
   contarRestaurantes,
   obtenerCategorias

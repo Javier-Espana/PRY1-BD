@@ -146,12 +146,59 @@ async function createIndexes() {
   console.log('\nTodos los índices creados exitosamente.\n');
 }
 
-/**
- * Validar índices con explain() para confirmar que usan IXSCAN.
- */
 async function validateIndexes() {
   const db = getDB();
-  console.log('\n🔍 Validando índices con explain()...\n');
+  console.log('\nValidando indices con explain()...\n');
+
+  function extractStats(explain) {
+    const plan = explain.queryPlanner?.winningPlan || {};
+    const stats = explain.executionStats || {};
+
+    function findStage(node) {
+      if (!node) return 'UNKNOWN';
+      if (node.stage === 'IXSCAN' || node.stage === 'COLLSCAN' || node.stage === 'GEO_NEAR_2DSPHERE') return node.stage;
+      if (node.inputStage) return findStage(node.inputStage);
+      if (node.inputStages) {
+        for (const s of node.inputStages) {
+          const r = findStage(s);
+          if (r !== 'UNKNOWN') return r;
+        }
+      }
+      return node.stage || 'UNKNOWN';
+    }
+
+    function findIndexName(node) {
+      if (!node) return '-';
+      if (node.indexName) return node.indexName;
+      if (node.inputStage) return findIndexName(node.inputStage);
+      if (node.inputStages) {
+        for (const s of node.inputStages) {
+          const r = findIndexName(s);
+          if (r !== '-') return r;
+        }
+      }
+      return '-';
+    }
+
+    return {
+      scan: findStage(plan),
+      index: findIndexName(plan),
+      nReturned: stats.nReturned ?? 0,
+      totalKeysExamined: stats.totalKeysExamined ?? 0,
+      totalDocsExamined: stats.totalDocsExamined ?? 0,
+      executionTimeMs: stats.executionTimeMillis ?? 0
+    };
+  }
+
+  function logResult(label, s) {
+    const ok = s.scan !== 'COLLSCAN';
+    const mark = ok ? '[OK]' : '[WARN]';
+    console.log(`  ${mark} ${label}`);
+    console.log(`       Scan: ${s.scan} | Index: ${s.index}`);
+    console.log(`       nReturned: ${s.nReturned} | keysExamined: ${s.totalKeysExamined} | docsExamined: ${s.totalDocsExamined} | time: ${s.executionTimeMs}ms`);
+  }
+
+  const { ObjectId } = require('mongodb');
 
   // 1. Restaurantes cercanos (2dsphere)
   const geoExplain = await db.collection('Restaurantes')
@@ -164,29 +211,55 @@ async function validateIndexes() {
       }
     })
     .explain('executionStats');
-  console.log('  Restaurantes cercanos:', geoExplain.queryPlanner?.winningPlan?.stage || 'N/A');
+  logResult('Restaurantes cercanos (2dsphere)', extractStats(geoExplain));
 
-  // 2. Menú por restaurante filtrando stock
+  // 2. Restaurantes por categoria
+  const catExplain = await db.collection('Restaurantes')
+    .find({ categoria: 'Italiana' })
+    .explain('executionStats');
+  logResult('Restaurantes por categoria', extractStats(catExplain));
+
+  // 3. Menu por restaurante + disponible
   const menuExplain = await db.collection('ArticulosMenu')
-    .find({ restaurante_id: { $exists: true }, stock: { $gt: 0 } })
+    .find({ restaurante_id: new ObjectId(), disponible: true })
     .explain('executionStats');
-  console.log('  Menú por restaurante:', menuExplain.queryPlanner?.winningPlan?.stage || 'N/A');
+  logResult('Menu por restaurante + disponible', extractStats(menuExplain));
 
-  // 3. Historial de órdenes por usuario
+  // 4. Ordenes por usuario + fecha
   const ordenesExplain = await db.collection('Ordenes')
-    .find({ usuario_id: { $exists: true } })
+    .find({ usuario_id: new ObjectId() })
     .sort({ fecha_creacion: -1 })
     .explain('executionStats');
-  console.log('  Órdenes por usuario:', ordenesExplain.queryPlanner?.winningPlan?.stage || 'N/A');
+  logResult('Ordenes por usuario + fecha', extractStats(ordenesExplain));
 
-  // 4. Reseñas por restaurante
+  // 5. Ordenes por estado
+  const estadoExplain = await db.collection('Ordenes')
+    .find({ estado: 'pendiente' })
+    .explain('executionStats');
+  logResult('Ordenes por estado', extractStats(estadoExplain));
+
+  // 6. Ordenes por restaurante + estado
+  const restEstadoExplain = await db.collection('Ordenes')
+    .find({ restaurante_id: new ObjectId(), estado: 'pendiente' })
+    .sort({ fecha_creacion: -1 })
+    .explain('executionStats');
+  logResult('Ordenes por restaurante + estado', extractStats(restEstadoExplain));
+
+  // 7. Resenas por restaurante + fecha
   const resenasExplain = await db.collection('Resenas')
-    .find({ restaurante_id: { $exists: true } })
+    .find({ restaurante_id: new ObjectId() })
     .sort({ fecha_creacion: -1 })
     .explain('executionStats');
-  console.log('  Reseñas por restaurante:', resenasExplain.queryPlanner?.winningPlan?.stage || 'N/A');
+  logResult('Resenas por restaurante + fecha', extractStats(resenasExplain));
 
-  console.log('\nValidación de índices completada.\n');
+  // 8. Resenas por usuario
+  const resenasUserExplain = await db.collection('Resenas')
+    .find({ usuario_id: new ObjectId() })
+    .sort({ fecha_creacion: -1 })
+    .explain('executionStats');
+  logResult('Resenas por usuario + fecha', extractStats(resenasUserExplain));
+
+  console.log('\nValidacion de indices completada.\n');
 }
 
 // Ejecutar si se corre directamente
