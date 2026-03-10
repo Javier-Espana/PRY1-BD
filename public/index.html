@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Gestion de Pedidos y Resenas</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2>Delivery DB</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#/" class="nav-link active" data-view="dashboard">
+        <span class="nav-icon">&#9632;</span> Dashboard
+      </a>
+      <a href="#/restaurantes" class="nav-link" data-view="restaurantes">
+        <span class="nav-icon">&#9632;</span> Restaurantes
+      </a>
+      <a href="#/usuarios" class="nav-link" data-view="usuarios">
+        <span class="nav-icon">&#9632;</span> Usuarios
+      </a>
+      <a href="#/menu" class="nav-link" data-view="menu">
+        <span class="nav-icon">&#9632;</span> Articulos Menu
+      </a>
+      <a href="#/ordenes" class="nav-link" data-view="ordenes">
+        <span class="nav-icon">&#9632;</span> Ordenes
+      </a>
+      <a href="#/resenas" class="nav-link" data-view="resenas">
+        <span class="nav-icon">&#9632;</span> Resenas
+      </a>
+      <a href="#/analiticas" class="nav-link" data-view="analiticas">
+        <span class="nav-icon">&#9632;</span> Analiticas
+      </a>
+      <a href="#/bulk" class="nav-link" data-view="bulk">
+        <span class="nav-icon">&#9632;</span> Bulk
+      </a>
+    </nav>
+  </aside>
+
+  <main class="main-content" id="mainContent">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle">&#9776;</button>
+      <h1 class="page-title" id="pageTitle">Dashboard</h1>
+    </header>
+    <div class="content" id="content">
+      <!-- Views render here -->
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Modal</h3>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/views/dashboard.js"></script>
+  <script src="js/views/restaurantes.js"></script>
+  <script src="js/views/usuarios.js"></script>
+  <script src="js/views/menuItems.js"></script>
+  <script src="js/views/ordenes.js"></script>
+  <script src="js/views/resenas.js"></script>
+  <script src="js/views/analiticas.js"></script>
+  <script src="js/views/bulk.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
