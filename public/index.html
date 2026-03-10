@@ -9,34 +9,56 @@
 <body>
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <h2>Delivery DB</h2>
+      <div class="sidebar-logo">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <div>
+          <h2>Delivery DB</h2>
+          <span class="sidebar-subtitle">Panel de gestion</span>
+        </div>
+      </div>
     </div>
     <nav class="sidebar-nav">
+      <div class="nav-section">Principal</div>
       <a href="#/" class="nav-link active" data-view="dashboard">
-        <span class="nav-icon">&#9632;</span> Dashboard
-      </a>
-      <a href="#/restaurantes" class="nav-link" data-view="restaurantes">
-        <span class="nav-icon">&#9632;</span> Restaurantes
-      </a>
-      <a href="#/usuarios" class="nav-link" data-view="usuarios">
-        <span class="nav-icon">&#9632;</span> Usuarios
-      </a>
-      <a href="#/menu" class="nav-link" data-view="menu">
-        <span class="nav-icon">&#9632;</span> Articulos Menu
-      </a>
-      <a href="#/ordenes" class="nav-link" data-view="ordenes">
-        <span class="nav-icon">&#9632;</span> Ordenes
-      </a>
-      <a href="#/resenas" class="nav-link" data-view="resenas">
-        <span class="nav-icon">&#9632;</span> Resenas
+        <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
       </a>
       <a href="#/analiticas" class="nav-link" data-view="analiticas">
-        <span class="nav-icon">&#9632;</span> Analiticas
+        <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Analiticas
+      </a>
+
+      <div class="nav-section">Datos</div>
+      <a href="#/restaurantes" class="nav-link" data-view="restaurantes">
+        <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        Restaurantes
+      </a>
+      <a href="#/usuarios" class="nav-link" data-view="usuarios">
+        <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Usuarios
+      </a>
+      <a href="#/menu" class="nav-link" data-view="menu">
+        <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Articulos Menu
+      </a>
+
+      <div class="nav-section">Operaciones</div>
+      <a href="#/ordenes" class="nav-link" data-view="ordenes">
+        <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+        Ordenes
+      </a>
+      <a href="#/resenas" class="nav-link" data-view="resenas">
+        <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Resenas
       </a>
       <a href="#/bulk" class="nav-link" data-view="bulk">
-        <span class="nav-icon">&#9632;</span> Bulk
+        <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+        Bulk Ops
       </a>
     </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-text">UVG &middot; BD2 &middot; Seccion 20</div>
+    </div>
   </aside>
 
   <main class="main-content" id="mainContent">
@@ -63,6 +85,7 @@
 
   <script src="js/api.js"></script>
   <script src="js/ui.js"></script>
+  <script src="js/charts.js"></script>
   <script src="js/views/dashboard.js"></script>
   <script src="js/views/restaurantes.js"></script>
   <script src="js/views/usuarios.js"></script>
