@@ -54,70 +54,104 @@ const AnaliticasView = (() => {
     const data = await API.analiticas.mejorCalificados({ limit: 15 });
     const items = Array.isArray(data) ? data : [];
     el.innerHTML = `
-      <div class="card">
-        <div class="card-header"><span class="card-title">Restaurantes Mejor Calificados (Aggregation Pipeline)</span></div>
-        <div class="table-wrapper">
-          <table>
-            <thead><tr><th>#</th><th>Nombre</th><th>Categoria</th><th>Promedio</th><th>Resenas</th></tr></thead>
-            <tbody>
-              ${items.map((r, i) => `
-                <tr>
-                  <td>${i + 1}</td>
-                  <td>${r.nombre}</td>
-                  <td>${UI.badge(r.categoria || '-', 'accent')}</td>
-                  <td>${UI.stars(r.promedio_calificacion)} ${(r.promedio_calificacion || 0).toFixed(2)}</td>
-                  <td>${r.total_resenas || 0}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
+      <div class="dashboard-grid">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Restaurantes Mejor Calificados</span></div>
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>#</th><th>Nombre</th><th>Categoria</th><th>Promedio</th><th>Resenas</th></tr></thead>
+              <tbody>
+                ${items.map((r, i) => `
+                  <tr>
+                    <td>${i + 1}</td>
+                    <td>${r.nombre}</td>
+                    <td>${UI.badge(r.categoria || '-', 'accent')}</td>
+                    <td>${UI.stars(r.promedio_calificacion)} ${(r.promedio_calificacion || 0).toFixed(2)}</td>
+                    <td>${r.total_resenas || 0}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Rating (grafica)</span></div>
+          <canvas id="chartTopRest"></canvas>
         </div>
       </div>
     `;
+    Charts.horizontalBar('chartTopRest', items.slice(0, 10).map((r, i) => ({
+      label: r.nombre,
+      value: r.promedio_calificacion || 0,
+      displayValue: (r.promedio_calificacion || 0).toFixed(1) + ' ★',
+      color: Charts.getColor(i)
+    })));
   }
 
   async function renderMasVendidos(el) {
     const data = await API.analiticas.masVendidos({ limit: 15 });
     const items = Array.isArray(data) ? data : [];
-    const max = Math.max(...items.map(p => p.total_vendido || 0), 1);
     el.innerHTML = `
-      <div class="card">
-        <div class="card-header"><span class="card-title">Platillos Mas Vendidos ($unwind + $group)</span></div>
-        <div class="bar-chart">
-          ${items.map(p => `
-            <div class="bar-row">
-              <span class="bar-label">${UI.truncate(p.nombre, 18)}</span>
-              <div class="bar-track">
-                <div class="bar-fill" style="width:${(p.total_vendido / max * 100)}%;background:var(--success)"></div>
-              </div>
-              <span class="bar-value">${p.total_vendido} | ${UI.formatMoney(p.monto_total)}</span>
-            </div>
-          `).join('')}
+      <div class="dashboard-grid">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Platillos Mas Vendidos ($unwind + $group)</span></div>
+          <canvas id="chartMasVendidos"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Proporcion de ventas</span></div>
+          <div class="chart-container" style="max-width:280px">
+            <canvas id="chartMasVendidosPie"></canvas>
+          </div>
+          <div id="legendMasVendidos"></div>
         </div>
       </div>
     `;
+    Charts.horizontalBar('chartMasVendidos', items.map((p, i) => ({
+      label: p.nombre,
+      value: p.total_vendido || 0,
+      displayValue: `${(p.total_vendido||0).toLocaleString()} | ${UI.formatMoney(p.monto_total)}`,
+      color: Charts.getColor(i)
+    })));
+    const pieData = items.slice(0, 8).map((p, i) => ({
+      label: UI.truncate(p.nombre, 14),
+      value: p.total_vendido || 0,
+      color: Charts.getColor(i)
+    }));
+    Charts.donut('chartMasVendidosPie', pieData, { size: 260, centerLabel: 'Vendidos', centerValue: pieData.reduce((s,d) => s + d.value, 0).toLocaleString() });
+    document.getElementById('legendMasVendidos').innerHTML = Charts.legend(pieData);
   }
 
   async function renderVentasRest(el) {
     const data = await API.analiticas.ventasRestaurante({ limit: 15 });
     const items = Array.isArray(data) ? data : [];
-    const max = Math.max(...items.map(v => v.monto_total || 0), 1);
     el.innerHTML = `
-      <div class="card">
-        <div class="card-header"><span class="card-title">Ventas por Restaurante (Aggregation Pipeline)</span></div>
-        <div class="bar-chart">
-          ${items.map(v => `
-            <div class="bar-row">
-              <span class="bar-label">${UI.truncate(v.nombre, 18)}</span>
-              <div class="bar-track">
-                <div class="bar-fill" style="width:${(v.monto_total / max * 100)}%;background:var(--info)"></div>
-              </div>
-              <span class="bar-value">${UI.formatMoney(v.monto_total)} (${v.total_ordenes})</span>
-            </div>
-          `).join('')}
+      <div class="dashboard-grid">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Ventas por Restaurante</span></div>
+          <canvas id="chartVentasRest"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Distribucion de ingresos</span></div>
+          <div class="chart-container" style="max-width:280px">
+            <canvas id="chartVentasRestPie"></canvas>
+          </div>
+          <div id="legendVentasRest"></div>
         </div>
       </div>
     `;
+    Charts.horizontalBar('chartVentasRest', items.map((v, i) => ({
+      label: v.nombre,
+      value: v.monto_total || 0,
+      displayValue: `${UI.formatMoney(v.monto_total)} (${v.total_ordenes})`,
+      color: Charts.getColor(i)
+    })));
+    const pieData = items.slice(0, 8).map((v, i) => ({
+      label: UI.truncate(v.nombre, 14),
+      value: v.monto_total || 0,
+      color: Charts.getColor(i)
+    }));
+    Charts.donut('chartVentasRestPie', pieData, { size: 260, centerLabel: 'Total', centerValue: UI.formatMoney(pieData.reduce((s,d) => s + d.value, 0)) });
+    document.getElementById('legendVentasRest').innerHTML = Charts.legend(pieData);
   }
 
   async function renderVentasPeriodo(el) {
@@ -134,30 +168,18 @@ const AnaliticasView = (() => {
             <button class="btn btn-primary btn-sm" id="btnLoadPeriodo">Cargar</button>
           </div>
         </div>
-        <div id="periodoContent"><div class="loading-state"><div class="spinner"></div></div></div>
+        <canvas id="chartPeriodo"></canvas>
       </div>
     `;
 
     const loadPeriodo = async () => {
       const periodo = document.getElementById('selPeriodo').value;
-      const container = document.getElementById('periodoContent');
-      container.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
       const data = await API.analiticas.ventasPeriodo({ periodo });
-      const items = (Array.isArray(data) ? data : []).slice(0, 20);
-      const max = Math.max(...items.map(v => v.monto_total || 0), 1);
-      container.innerHTML = `
-        <div class="bar-chart">
-          ${items.map(v => `
-            <div class="bar-row">
-              <span class="bar-label">${v.periodo || '-'}</span>
-              <div class="bar-track">
-                <div class="bar-fill" style="width:${(v.monto_total / max * 100)}%;background:var(--warning)"></div>
-              </div>
-              <span class="bar-value">${UI.formatMoney(v.monto_total)} (${v.total_ordenes})</span>
-            </div>
-          `).join('')}
-        </div>
-      `;
+      const items = (Array.isArray(data) ? data : []).slice(0, 30);
+      Charts.line('chartPeriodo', items.map(v => ({
+        label: v.periodo || '-',
+        value: v.monto_total || 0
+      })), { color: '#f59e0b', formatValue: v => 'Q' + (v/1000).toFixed(0) + 'k' });
     };
 
     document.getElementById('btnLoadPeriodo').addEventListener('click', loadPeriodo);
@@ -167,23 +189,35 @@ const AnaliticasView = (() => {
   async function renderEstados(el) {
     const data = await API.analiticas.ordenesPorEstado();
     const items = Array.isArray(data) ? data : [];
-    const max = Math.max(...items.map(e => e.total || 0), 1);
+    const estadoColors = { pendiente: '#f59e0b', preparando: '#3b82f6', enviado: '#6366f1', entregado: '#22c55e', cancelado: '#ef4444' };
     el.innerHTML = `
-      <div class="card">
-        <div class="card-header"><span class="card-title">Ordenes por Estado</span></div>
-        <div class="bar-chart">
-          ${items.map(e => `
-            <div class="bar-row">
-              <span class="bar-label">${e.estado || e._id}</span>
-              <div class="bar-track">
-                <div class="bar-fill" style="width:${(e.total / max * 100)}%"></div>
-              </div>
-              <span class="bar-value">${e.total}</span>
-            </div>
-          `).join('')}
+      <div class="dashboard-grid">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Ordenes por Estado</span></div>
+          <div class="chart-container" style="max-width:280px">
+            <canvas id="chartEstadosAn"></canvas>
+          </div>
+          <div id="legendEstadosAn"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Detalle por estado</span></div>
+          <canvas id="chartEstadosBar"></canvas>
         </div>
       </div>
     `;
+    const chartData = items.map(e => ({
+      label: e.estado || e._id || '-',
+      value: e.total || 0,
+      color: estadoColors[e.estado || e._id] || Charts.getColor(0)
+    }));
+    Charts.donut('chartEstadosAn', chartData, {
+      size: 260, centerLabel: 'Ordenes',
+      centerValue: chartData.reduce((s,d) => s + d.value, 0).toLocaleString()
+    });
+    document.getElementById('legendEstadosAn').innerHTML = Charts.legend(chartData);
+    Charts.horizontalBar('chartEstadosBar', chartData.map(d => ({
+      ...d, displayValue: d.value.toLocaleString()
+    })));
   }
 
   async function renderDistribucion(el) {
@@ -207,23 +241,25 @@ const AnaliticasView = (() => {
       try {
         const data = await API.analiticas.distribucion(id);
         const items = Array.isArray(data) ? data : [];
-        const max = Math.max(...items.map(d => d.total || 0), 1);
         container.innerHTML = `
-          <div class="bar-chart">
-            ${[5,4,3,2,1].map(n => {
-              const d = items.find(i => i.calificacion === n || i._id === n) || { total: 0 };
-              return `
-                <div class="bar-row">
-                  <span class="bar-label">${'&#9733;'.repeat(n)} (${n})</span>
-                  <div class="bar-track">
-                    <div class="bar-fill" style="width:${(d.total / max * 100)}%;background:var(--warning)"></div>
-                  </div>
-                  <span class="bar-value">${d.total}</span>
-                </div>
-              `;
-            }).join('')}
+          <div class="dashboard-grid">
+            <div>
+              <canvas id="chartDistBar"></canvas>
+            </div>
+            <div class="chart-container" style="max-width:220px">
+              <canvas id="chartDistPie"></canvas>
+              <div id="legendDist"></div>
+            </div>
           </div>
         `;
+        const starColors = ['#ef4444','#f97316','#f59e0b','#84cc16','#22c55e'];
+        const chartData = [5,4,3,2,1].map(n => {
+          const d = items.find(i => i.calificacion === n || i._id === n) || { total: 0 };
+          return { label: '★'.repeat(n) + ' (' + n + ')', value: d.total || 0, color: starColors[5-n] };
+        });
+        Charts.horizontalBar('chartDistBar', chartData);
+        Charts.donut('chartDistPie', chartData, { size: 200, centerLabel: 'Total', centerValue: chartData.reduce((s,d) => s + d.value, 0).toLocaleString() });
+        document.getElementById('legendDist').innerHTML = Charts.legend(chartData);
       } catch (err) {
         container.innerHTML = `<div class="empty-state"><p>Error: ${err.message}</p></div>`;
       }

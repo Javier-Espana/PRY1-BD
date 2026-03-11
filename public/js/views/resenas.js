@@ -151,18 +151,42 @@ const ResenasView = (() => {
         </div>
         ${r.imagenes?.length ? `
           <h4 style="margin:16px 0 8px;font-size:14px">Imagenes (${r.imagenes.length})</h4>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="image-gallery">
             ${r.imagenes.map(img => `
-              <div class="card" style="padding:8px;font-size:12px">
-                <div>${img.filename || img.file_id}</div>
-                <div class="btn-group" style="margin-top:4px">
-                  <a href="/api/resenas/archivos/${img.file_id}" target="_blank" class="btn btn-outline btn-sm">Descargar</a>
+              <div class="image-thumb" data-url="/api/resenas/archivos/${img.file_id}">
+                <img src="/api/resenas/archivos/${img.file_id}" alt="${img.filename || 'imagen'}" loading="lazy">
+                <div class="image-thumb-overlay">
+                  <span>${img.filename || 'imagen'}</span>
                 </div>
               </div>
             `).join('')}
           </div>
-        ` : ''}
+        ` : '<p style="margin-top:12px;color:var(--text-muted)">Sin imagenes adjuntas</p>'}
+        <div class="modal-footer" style="margin-top:12px">
+          <button class="btn btn-outline btn-sm" id="btnUploadFromDetail" data-id="${r._id}">+ Subir Imagen</button>
+          <button class="btn btn-outline btn-sm" id="btnDeleteResFromDetail" data-id="${r._id}">Eliminar Resena</button>
+        </div>
       `);
+      // Lightbox on image click
+      document.querySelectorAll('.image-thumb').forEach(thumb => {
+        thumb.addEventListener('click', () => {
+          const url = thumb.dataset.url;
+          const lb = document.createElement('div');
+          lb.className = 'image-lightbox';
+          lb.innerHTML = '<img src="' + url + '">';
+          lb.addEventListener('click', () => lb.remove());
+          document.body.appendChild(lb);
+          requestAnimationFrame(() => lb.classList.add('active'));
+        });
+      });
+      document.getElementById('btnUploadFromDetail')?.addEventListener('click', () => {
+        UI.closeModal();
+        showUploadForm(r._id);
+      });
+      document.getElementById('btnDeleteResFromDetail')?.addEventListener('click', async () => {
+        UI.closeModal();
+        await deleteResena(r._id);
+      });
     } catch (err) {
       UI.toast(err.message, 'error');
     }
@@ -204,23 +228,47 @@ const ResenasView = (() => {
     try {
       const data = await API.resenas.listarArchivos();
       const archivos = Array.isArray(data) ? data : (data.data || []);
-      UI.openModal('Archivos en GridFS', `
+      const isImage = (name) => /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(name || '');
+      UI.openModal('Archivos en GridFS (Bucket: imagenes)', `
+        ${archivos.length ? `
+          <div class="image-gallery" style="margin-bottom:16px">
+            ${archivos.filter(a => isImage(a.filename)).map(a => `
+              <div class="image-thumb" data-url="/api/resenas/archivos/${a._id}">
+                <img src="/api/resenas/archivos/${a._id}" alt="${a.filename}" loading="lazy">
+                <div class="image-thumb-overlay"><span>${a.filename}</span></div>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
         <div class="table-wrapper">
           <table>
-            <thead><tr><th>Nombre</th><th>Tamano</th><th>Fecha</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>Preview</th><th>Nombre</th><th>Tamano</th><th>Fecha</th><th>Acciones</th></tr></thead>
             <tbody>
               ${archivos.length ? archivos.map(a => `
                 <tr>
+                  <td>${isImage(a.filename) ? `<img src="/api/resenas/archivos/${a._id}" style="width:40px;height:40px;object-fit:cover;border-radius:4px">` : '-'}</td>
                   <td>${a.filename}</td>
                   <td>${(a.length / 1024).toFixed(1)} KB</td>
                   <td>${UI.formatDate(a.uploadDate)}</td>
                   <td><a href="/api/resenas/archivos/${a._id}" target="_blank" class="btn btn-outline btn-sm">Descargar</a></td>
                 </tr>
-              `).join('') : '<tr><td colspan="4" class="empty-state">Sin archivos</td></tr>'}
+              `).join('') : '<tr><td colspan="5" class="empty-state">Sin archivos</td></tr>'}
             </tbody>
           </table>
         </div>
       `);
+      // Lightbox
+      document.querySelectorAll('.image-thumb').forEach(thumb => {
+        thumb.addEventListener('click', () => {
+          const url = thumb.dataset.url;
+          const lb = document.createElement('div');
+          lb.className = 'image-lightbox';
+          lb.innerHTML = '<img src="' + url + '">';
+          lb.addEventListener('click', () => lb.remove());
+          document.body.appendChild(lb);
+          requestAnimationFrame(() => lb.classList.add('active'));
+        });
+      });
     } catch (err) {
       UI.toast(err.message, 'error');
     }
