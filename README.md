@@ -4,6 +4,9 @@ Proyecto 1 — CC3089 Base de Datos 2, Seccion 20
 Universidad del Valle de Guatemala  
 Catedratica: Daniela Mesalles
 
+## Vídeo entrega 2
+[https://youtu.be/k81IXQgeaFE](https://youtu.be/k81IXQgeaFE)
+
 ## Equipo
 
 | Nombre | Carne |
