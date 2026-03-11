@@ -31,7 +31,11 @@ const MenuItemsView = (() => {
               <input type="checkbox" id="chkDisponibles" ${soloDisponibles ? 'checked' : ''}> Solo disponibles
             </label>
           </div>
-          <button class="btn btn-primary" id="btnNewItem" ${!selectedRestId ? 'disabled' : ''}>+ Nuevo Articulo</button>
+          <div class="btn-group">
+            <button class="btn btn-outline" id="btnBulkUpdateMenu" ${!selectedRestId ? 'disabled' : ''}>Actualizar varios</button>
+            <button class="btn btn-outline" id="btnBulkDeleteMenu" ${!selectedRestId ? 'disabled' : ''}>Eliminar varios</button>
+            <button class="btn btn-primary" id="btnNewItem" ${!selectedRestId ? 'disabled' : ''}>+ Nuevo Articulo</button>
+          </div>
         </div>
         <div class="toolbar" style="margin-top:-8px">
           <div class="toolbar-left">
@@ -50,6 +54,16 @@ const MenuItemsView = (() => {
         if (selectedRestId) {
           loadMenu();
           document.getElementById('btnNewItem').disabled = false;
+          document.getElementById('btnBulkUpdateMenu').disabled = false;
+          document.getElementById('btnBulkDeleteMenu').disabled = false;
+        } else {
+          document.getElementById('btnNewItem').disabled = true;
+          document.getElementById('btnBulkUpdateMenu').disabled = true;
+          document.getElementById('btnBulkDeleteMenu').disabled = true;
+          const content = document.getElementById('menuContent');
+          if (content) {
+            content.innerHTML = '<div class="empty-state"><p>Selecciona un restaurante para ver su menu</p></div>';
+          }
         }
       });
 
@@ -66,6 +80,8 @@ const MenuItemsView = (() => {
       });
 
       document.getElementById('btnNewItem')?.addEventListener('click', showCreateForm);
+      document.getElementById('btnBulkUpdateMenu')?.addEventListener('click', showBulkUpdateForm);
+      document.getElementById('btnBulkDeleteMenu')?.addEventListener('click', showBulkDeleteForm);
       document.getElementById('btnSearchMenu')?.addEventListener('click', performSearch);
       document.getElementById('menuSearch')?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') performSearch();
@@ -238,6 +254,107 @@ const MenuItemsView = (() => {
     } catch (err) {
       UI.toast(err.message, 'error');
     }
+  }
+
+  function showBulkUpdateForm() {
+    if (!selectedRestId) return UI.toast('Selecciona un restaurante primero', 'error');
+    UI.openModal('Actualizar varios articulos', `
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">
+        Actualiza disponibilidad o stock de varios articulos del restaurante seleccionado.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Categoria (opcional)</label>
+        <select class="form-control" id="fBulkCatMenu">
+          <option value="">Todas</option>
+          ${['Entrada','Plato Fuerte','Postre','Bebida','Acompañamiento','Ensalada','Sopa','Snack','Otro'].map(c => `<option value="${c}">${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Disponible</label>
+          <select class="form-control" id="fBulkDispMenu">
+            <option value="true">Si</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Stock nuevo (opcional)</label>
+          <input class="form-control" type="number" id="fBulkStockMenu" placeholder="Ej: 100">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="UI.closeModal()">Cancelar</button>
+        <button class="btn btn-primary" id="btnExecBulkUpdateMenu">Actualizar varios</button>
+      </div>
+    `);
+
+    document.getElementById('btnExecBulkUpdateMenu')?.addEventListener('click', async () => {
+      const categoria = UI.formValue('fBulkCatMenu');
+      const disponible = UI.formValue('fBulkDispMenu') === 'true';
+      const stockRaw = UI.formValue('fBulkStockMenu');
+
+      const filtro = { restaurante_id: selectedRestId };
+      if (categoria) filtro.categoria = categoria;
+
+      const datos = { disponible };
+      if (stockRaw !== '') {
+        const stock = parseInt(stockRaw, 10);
+        if (Number.isNaN(stock) || stock < 0) return UI.toast('Stock inválido', 'error');
+        datos.stock = stock;
+      }
+
+      try {
+        const result = await API.menu.actualizarVarios(filtro, datos);
+        UI.closeModal();
+        UI.toast(`Articulos actualizados: ${result.modificados || 0}`, 'success');
+        loadMenu();
+      } catch (err) {
+        UI.toast(err.message, 'error');
+      }
+    });
+  }
+
+  function showBulkDeleteForm() {
+    if (!selectedRestId) return UI.toast('Selecciona un restaurante primero', 'error');
+    UI.openModal('Eliminar varios articulos', `
+      <p style="font-size:13px;color:var(--danger);margin-bottom:12px">
+        Elimina artículos del restaurante seleccionado.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Categoria a eliminar (opcional)</label>
+        <select class="form-control" id="fBulkDeleteCatMenu">
+          <option value="">Todas las categorias del restaurante</option>
+          ${['Entrada','Plato Fuerte','Postre','Bebida','Acompañamiento','Ensalada','Sopa','Snack','Otro'].map(c => `<option value="${c}">${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirmacion (escribe ELIMINAR)</label>
+        <input class="form-control" id="fBulkDeleteConfirmMenu" placeholder="ELIMINAR">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="UI.closeModal()">Cancelar</button>
+        <button class="btn btn-danger" id="btnExecBulkDeleteMenu">Eliminar varios</button>
+      </div>
+    `);
+
+    document.getElementById('btnExecBulkDeleteMenu')?.addEventListener('click', async () => {
+      const categoria = UI.formValue('fBulkDeleteCatMenu');
+      const confirmText = UI.formValue('fBulkDeleteConfirmMenu');
+      if (confirmText !== 'ELIMINAR') return UI.toast('Debes escribir ELIMINAR para confirmar', 'error');
+
+      const filtro = { restaurante_id: selectedRestId };
+      if (categoria) filtro.categoria = categoria;
+
+      try {
+        const result = await API.menu.eliminarVarios(filtro);
+        UI.closeModal();
+        UI.toast(`Articulos eliminados: ${result.eliminados || 0}`, 'success');
+        page = 1;
+        loadMenu();
+      } catch (err) {
+        UI.toast(err.message, 'error');
+      }
+    });
   }
 
   async function performSearch() {

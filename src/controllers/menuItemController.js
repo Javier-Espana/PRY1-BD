@@ -72,6 +72,32 @@ async function eliminarArticulo(req, res) {
   }
 }
 
+async function actualizarVariosArticulos(req, res) {
+  try {
+    const { filtro, datos } = req.body;
+    if (!filtro || Object.keys(filtro).length === 0) {
+      return res.status(400).json({ error: 'Se requiere un filtro no vacío' });
+    }
+    const result = await service.actualizarVariosArticulos(filtro, datos || {});
+    res.json({ modificados: result.modifiedCount });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
+
+async function eliminarVariosArticulos(req, res) {
+  try {
+    const { filtro } = req.body;
+    if (!filtro || Object.keys(filtro).length === 0) {
+      return res.status(400).json({ error: 'Se requiere un filtro no vacío' });
+    }
+    const result = await service.eliminarVariosArticulos(filtro);
+    res.json({ eliminados: result.deletedCount });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
 module.exports = {
   crearArticulo,
   crearVariosArticulos,
@@ -79,5 +105,7 @@ module.exports = {
   buscarArticulos,
   obtenerArticulo,
   actualizarArticulo,
-  eliminarArticulo
+  actualizarVariosArticulos,
+  eliminarArticulo,
+  eliminarVariosArticulos
 };

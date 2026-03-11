@@ -11,11 +11,46 @@ async function crearOrden(req, res) {
 
 async function listarOrdenes(req, res) {
   try {
-    const { skip, limit, estado } = req.query;
+    const {
+      skip,
+      limit,
+      estado,
+      metodo_pago,
+      min_total,
+      max_total,
+      sort_field,
+      sort_order,
+      campos
+    } = req.query;
+
     const filtro = {};
     if (estado) filtro.estado = estado;
+    if (metodo_pago) filtro.metodo_pago = metodo_pago;
+    if (min_total || max_total) {
+      filtro.total = {};
+      if (min_total) filtro.total.$gte = parseFloat(min_total);
+      if (max_total) filtro.total.$lte = parseFloat(max_total);
+    }
+
+    const sort = sort_field
+      ? { [sort_field]: parseInt(sort_order, 10) === 1 ? 1 : -1 }
+      : { fecha_creacion: -1 };
+
+    const proyeccion = {};
+    if (campos) {
+      String(campos)
+        .split(',')
+        .map(campo => campo.trim())
+        .filter(Boolean)
+        .forEach(campo => {
+          proyeccion[campo] = 1;
+        });
+    }
+
     const result = await service.listarOrdenes({
       filtro,
+      sort,
+      proyeccion,
       skip: parseInt(skip) || 0,
       limit: parseInt(limit) || 10
     });

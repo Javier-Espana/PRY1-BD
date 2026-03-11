@@ -97,8 +97,21 @@ async function obtenerOrden(id) {
   return result[0] || null;
 }
 
-async function listarOrdenes({ filtro = {}, sort = { fecha_creacion: -1 }, skip = 0, limit = 10 } = {}) {
+function buildProjection(proyeccion = {}) {
+  const hasProjection = proyeccion && Object.keys(proyeccion).length > 0;
+  if (!hasProjection) {
+    return { 'usuario.password_hash': 0 };
+  }
+
+  const projected = { ...proyeccion };
+  projected['usuario.password_hash'] = 0;
+  return projected;
+}
+
+async function listarOrdenes({ filtro = {}, proyeccion = {}, sort = { fecha_creacion: -1 }, skip = 0, limit = 10 } = {}) {
   const db = getDB();
+  const projectionStage = buildProjection(proyeccion);
+
   return await db.collection(COLLECTION).aggregate([
     { $match: filtro },
     { $sort: sort },
@@ -122,7 +135,7 @@ async function listarOrdenes({ filtro = {}, sort = { fecha_creacion: -1 }, skip 
       }
     },
     { $unwind: { path: '$restaurante', preserveNullAndEmptyArrays: true } },
-    { $project: { 'usuario.password_hash': 0 } }
+    { $project: projectionStage }
   ]).toArray();
 }
 

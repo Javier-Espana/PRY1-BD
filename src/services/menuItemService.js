@@ -83,14 +83,32 @@ async function actualizarArticulo(id, datos) {
   );
 }
 
+function normalizarFiltroBulk(filtro = {}) {
+  const normalized = { ...filtro };
+  if (normalized.restaurante_id) {
+    normalized.restaurante_id = new ObjectId(normalized.restaurante_id);
+  }
+  if (normalized._id) {
+    normalized._id = new ObjectId(normalized._id);
+  }
+  return normalized;
+}
+
 async function actualizarVariosArticulos(filtro, datos) {
   const db = getDB();
-  return await db.collection(COLLECTION).updateMany(filtro, { $set: datos });
+  const safeFiltro = normalizarFiltroBulk(filtro);
+  return await db.collection(COLLECTION).updateMany(safeFiltro, { $set: datos });
 }
 
 async function eliminarArticulo(id) {
   const db = getDB();
   return await db.collection(COLLECTION).deleteOne({ _id: new ObjectId(id) });
+}
+
+async function eliminarVariosArticulos(filtro) {
+  const db = getDB();
+  const safeFiltro = normalizarFiltroBulk(filtro);
+  return await db.collection(COLLECTION).deleteMany(safeFiltro);
 }
 
 async function eliminarArticulosDeRestaurante(restauranteId) {
@@ -117,6 +135,7 @@ module.exports = {
   actualizarArticulo,
   actualizarVariosArticulos,
   eliminarArticulo,
+  eliminarVariosArticulos,
   eliminarArticulosDeRestaurante,
   contarArticulos,
   obtenerCategoriasArticulos

@@ -1,7 +1,11 @@
 const OrdenesView = (() => {
   let page = 1;
-  const limit = 15;
+  let pageSize = 15;
   let filtroEstado = '';
+  let filtroMetodoPago = '';
+  let sortField = 'fecha_creacion';
+  let sortOrder = -1;
+  let projectionPreset = 'completa';
 
   async function render() {
     UI.setTitle('Ordenes');
@@ -11,9 +15,18 @@ const OrdenesView = (() => {
 
   async function loadList() {
     try {
-      const skip = (page - 1) * limit;
-      const params = { skip, limit };
+      const skip = (page - 1) * pageSize;
+      const params = {
+        skip,
+        limit: pageSize,
+        sort_field: sortField,
+        sort_order: sortOrder
+      };
       if (filtroEstado) params.estado = filtroEstado;
+      if (filtroMetodoPago) params.metodo_pago = filtroMetodoPago;
+      const campos = getProjectionFields(projectionPreset);
+      if (campos) params.campos = campos;
+
       const data = await API.ordenes.listar(params);
       const items = Array.isArray(data) ? data : (data.data || []);
 
@@ -26,8 +39,40 @@ const OrdenesView = (() => {
                 `<option value="${e}" ${e === filtroEstado ? 'selected' : ''}>${e}</option>`
               ).join('')}
             </select>
+            <select class="form-control" id="filtroMetodoPago" style="width:170px">
+              <option value="">Todos los pagos</option>
+              ${['efectivo','tarjeta','transferencia'].map(m =>
+                `<option value="${m}" ${m === filtroMetodoPago ? 'selected' : ''}>${m}</option>`
+              ).join('')}
+            </select>
+            <select class="form-control" id="sortFieldOrd" style="width:170px">
+              <option value="fecha_creacion" ${sortField === 'fecha_creacion' ? 'selected' : ''}>Ordenar por fecha</option>
+              <option value="total" ${sortField === 'total' ? 'selected' : ''}>Ordenar por total</option>
+              <option value="estado" ${sortField === 'estado' ? 'selected' : ''}>Ordenar por estado</option>
+            </select>
+            <select class="form-control" id="sortOrderOrd" style="width:120px">
+              <option value="-1" ${sortOrder === -1 ? 'selected' : ''}>Desc ▼</option>
+              <option value="1" ${sortOrder === 1 ? 'selected' : ''}>Asc ▲</option>
+            </select>
+            <select class="form-control" id="projectionOrd" style="width:190px">
+              <option value="completa" ${projectionPreset === 'completa' ? 'selected' : ''}>Proyeccion: Completa</option>
+              <option value="resumen" ${projectionPreset === 'resumen' ? 'selected' : ''}>Proyeccion: Resumen</option>
+              <option value="operativa" ${projectionPreset === 'operativa' ? 'selected' : ''}>Proyeccion: Operativa</option>
+            </select>
+            <select class="form-control" id="limitOrd" style="width:110px">
+              ${[15, 30, 50].map(n => `<option value="${n}" ${pageSize === n ? 'selected' : ''}>Limite ${n}</option>`).join('')}
+            </select>
           </div>
-          <button class="btn btn-primary" id="btnNewOrder">+ Nueva Orden</button>
+          <div class="btn-group">
+            <button class="btn btn-outline" id="btnBulkUpdateOrder">Actualizar varios</button>
+            <button class="btn btn-outline" id="btnBulkDeleteOrder">Eliminar varios</button>
+            <button class="btn btn-primary" id="btnNewOrder">+ Nueva Orden</button>
+          </div>
+        </div>
+        <div class="toolbar" style="margin-top:-8px">
+          <div class="toolbar-left" style="font-size:13px;color:var(--text-secondary)">
+            Consulta actual: skip=${skip}, limite=${pageSize}, lookup=Usuarios+Restaurantes
+          </div>
         </div>
         <div class="card">
           <div class="table-wrapper">
@@ -65,7 +110,7 @@ const OrdenesView = (() => {
               </tbody>
             </table>
           </div>
-          ${UI.pagination(page, items.length === limit ? page + 1 : page)}
+          ${UI.pagination(page, items.length === pageSize ? page + 1 : page)}
         </div>
       `);
 
@@ -81,7 +126,34 @@ const OrdenesView = (() => {
       page = 1;
       loadList();
     });
+    document.getElementById('filtroMetodoPago')?.addEventListener('change', (e) => {
+      filtroMetodoPago = e.target.value;
+      page = 1;
+      loadList();
+    });
+    document.getElementById('sortFieldOrd')?.addEventListener('change', (e) => {
+      sortField = e.target.value || 'fecha_creacion';
+      page = 1;
+      loadList();
+    });
+    document.getElementById('sortOrderOrd')?.addEventListener('change', (e) => {
+      sortOrder = parseInt(e.target.value, 10) === 1 ? 1 : -1;
+      page = 1;
+      loadList();
+    });
+    document.getElementById('projectionOrd')?.addEventListener('change', (e) => {
+      projectionPreset = e.target.value || 'completa';
+      page = 1;
+      loadList();
+    });
+    document.getElementById('limitOrd')?.addEventListener('change', (e) => {
+      pageSize = parseInt(e.target.value, 10) || 15;
+      page = 1;
+      loadList();
+    });
     document.getElementById('btnNewOrder')?.addEventListener('click', showCreateForm);
+    document.getElementById('btnBulkUpdateOrder')?.addEventListener('click', showBulkUpdateForm);
+    document.getElementById('btnBulkDeleteOrder')?.addEventListener('click', showBulkDeleteForm);
     document.querySelectorAll('.order-detail').forEach(el => {
       el.addEventListener('click', (e) => { e.preventDefault(); showDetail(el.dataset.id); });
     });
@@ -728,6 +800,90 @@ const OrdenesView = (() => {
     }
   }
 
+  function showBulkUpdateForm() {
+    UI.openModal('Actualizar varias ordenes', `
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">
+        Actualiza varias ordenes usando un filtro por estado.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Estado actual (filtro) *</label>
+        <select class="form-control" id="fBulkEstadoActual">
+          <option value="">Selecciona estado</option>
+          ${['pendiente','preparando','enviado','entregado','cancelado'].map(e => `<option value="${e}">${e}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nuevo estado *</label>
+        <select class="form-control" id="fBulkEstadoNuevo">
+          ${['pendiente','preparando','enviado','entregado','cancelado'].map(e => `<option value="${e}">${e}</option>`).join('')}
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="UI.closeModal()">Cancelar</button>
+        <button class="btn btn-primary" id="btnExecBulkUpdateOrder">Actualizar varios</button>
+      </div>
+    `);
+
+    document.getElementById('btnExecBulkUpdateOrder')?.addEventListener('click', async () => {
+      const estadoActual = UI.formValue('fBulkEstadoActual');
+      const estadoNuevo = UI.formValue('fBulkEstadoNuevo');
+      if (!estadoActual || !estadoNuevo) return UI.toast('Completa ambos estados', 'error');
+      if (estadoActual === estadoNuevo) return UI.toast('El nuevo estado debe ser distinto', 'error');
+
+      try {
+        const result = await API.ordenes.actualizarVarios(
+          { estado: estadoActual },
+          { estado: estadoNuevo }
+        );
+        UI.closeModal();
+        UI.toast(`Ordenes actualizadas: ${result.modificados || 0}`, 'success');
+        loadList();
+      } catch (err) {
+        UI.toast(err.message, 'error');
+      }
+    });
+  }
+
+  function showBulkDeleteForm() {
+    UI.openModal('Eliminar varias ordenes', `
+      <p style="font-size:13px;color:var(--danger);margin-bottom:12px">
+        Esta accion elimina de forma permanente todas las ordenes que cumplan el filtro.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Estado a eliminar *</label>
+        <select class="form-control" id="fBulkEstadoEliminar">
+          <option value="">Selecciona estado</option>
+          ${['pendiente','preparando','enviado','entregado','cancelado'].map(e => `<option value="${e}">${e}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirmacion (escribe ELIMINAR)</label>
+        <input class="form-control" id="fBulkDeleteConfirm" placeholder="ELIMINAR">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="UI.closeModal()">Cancelar</button>
+        <button class="btn btn-danger" id="btnExecBulkDeleteOrder">Eliminar varios</button>
+      </div>
+    `);
+
+    document.getElementById('btnExecBulkDeleteOrder')?.addEventListener('click', async () => {
+      const estado = UI.formValue('fBulkEstadoEliminar');
+      const confirmText = UI.formValue('fBulkDeleteConfirm');
+      if (!estado) return UI.toast('Selecciona un estado', 'error');
+      if (confirmText !== 'ELIMINAR') return UI.toast('Debes escribir ELIMINAR para confirmar', 'error');
+
+      try {
+        const result = await API.ordenes.eliminarVarios({ estado });
+        UI.closeModal();
+        UI.toast(`Ordenes eliminadas: ${result.eliminados || 0}`, 'success');
+        page = 1;
+        loadList();
+      } catch (err) {
+        UI.toast(err.message, 'error');
+      }
+    });
+  }
+
   function extractArray(data) {
     return Array.isArray(data) ? data : (data.data || []);
   }
@@ -812,6 +968,16 @@ const OrdenesView = (() => {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  }
+
+  function getProjectionFields(preset) {
+    if (preset === 'resumen') {
+      return '_id,estado,total,fecha_creacion,usuario.nombre,restaurante.nombre';
+    }
+    if (preset === 'operativa') {
+      return '_id,estado,total,metodo_pago,items,fecha_creacion,usuario.nombre,restaurante.nombre';
+    }
+    return '';
   }
 
   return { render };

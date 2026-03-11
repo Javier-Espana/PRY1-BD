@@ -32,7 +32,11 @@ const RestaurantesView = (() => {
             <button class="btn btn-outline btn-sm" id="btnSearchRest">Buscar</button>
             <button class="btn btn-outline btn-sm" id="btnCercanos">Cercanos</button>
           </div>
-          <button class="btn btn-primary" id="btnNewRest">+ Nuevo Restaurante</button>
+          <div class="btn-group">
+            <button class="btn btn-outline" id="btnBulkUpdateRest">Actualizar varios</button>
+            <button class="btn btn-outline" id="btnBulkDeleteRest">Eliminar varios</button>
+            <button class="btn btn-primary" id="btnNewRest">+ Nuevo Restaurante</button>
+          </div>
         </div>
         <div class="toolbar" style="margin-top:-8px">
           <div class="toolbar-left">
@@ -97,6 +101,8 @@ const RestaurantesView = (() => {
 
   function bindEvents() {
     document.getElementById('btnNewRest')?.addEventListener('click', showCreateForm);
+    document.getElementById('btnBulkUpdateRest')?.addEventListener('click', showBulkUpdateForm);
+    document.getElementById('btnBulkDeleteRest')?.addEventListener('click', showBulkDeleteForm);
     document.getElementById('btnSearchRest')?.addEventListener('click', performSearch);
     document.getElementById('btnCercanos')?.addEventListener('click', showCercanosForm);
     document.getElementById('restSearch')?.addEventListener('keydown', (e) => {
@@ -303,6 +309,89 @@ const RestaurantesView = (() => {
     } catch (err) {
       UI.toast(err.message, 'error');
     }
+  }
+
+  function showBulkUpdateForm() {
+    UI.openModal('Actualizar varios restaurantes', `
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">
+        Aplica cambios masivos usando filtro por categoria.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Categoria a filtrar *</label>
+        <select class="form-control" id="fBulkCatRest">
+          <option value="">Selecciona categoria</option>
+          ${categoriasList.map(c => `<option value="${c}">${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estado activo</label>
+        <select class="form-control" id="fBulkActivoRest">
+          <option value="true">Activo</option>
+          <option value="false">Inactivo</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="UI.closeModal()">Cancelar</button>
+        <button class="btn btn-primary" id="btnExecBulkUpdateRest">Actualizar varios</button>
+      </div>
+    `);
+
+    document.getElementById('btnExecBulkUpdateRest')?.addEventListener('click', async () => {
+      const categoria = UI.formValue('fBulkCatRest');
+      const activo = UI.formValue('fBulkActivoRest') === 'true';
+      if (!categoria) return UI.toast('Selecciona una categoria', 'error');
+      try {
+        const result = await API.restaurantes.actualizarVarios(
+          { categoria },
+          { activo }
+        );
+        UI.closeModal();
+        UI.toast(`Restaurantes actualizados: ${result.modificados || 0}`, 'success');
+        loadList();
+      } catch (err) {
+        UI.toast(err.message, 'error');
+      }
+    });
+  }
+
+  function showBulkDeleteForm() {
+    UI.openModal('Eliminar varios restaurantes', `
+      <p style="font-size:13px;color:var(--danger);margin-bottom:12px">
+        Elimina permanentemente restaurantes por categoria.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Categoria a eliminar *</label>
+        <select class="form-control" id="fBulkDeleteCatRest">
+          <option value="">Selecciona categoria</option>
+          ${categoriasList.map(c => `<option value="${c}">${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirmacion (escribe ELIMINAR)</label>
+        <input class="form-control" id="fBulkDeleteConfirmRest" placeholder="ELIMINAR">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="UI.closeModal()">Cancelar</button>
+        <button class="btn btn-danger" id="btnExecBulkDeleteRest">Eliminar varios</button>
+      </div>
+    `);
+
+    document.getElementById('btnExecBulkDeleteRest')?.addEventListener('click', async () => {
+      const categoria = UI.formValue('fBulkDeleteCatRest');
+      const confirmText = UI.formValue('fBulkDeleteConfirmRest');
+      if (!categoria) return UI.toast('Selecciona una categoria', 'error');
+      if (confirmText !== 'ELIMINAR') return UI.toast('Debes escribir ELIMINAR para confirmar', 'error');
+
+      try {
+        const result = await API.restaurantes.eliminarVarios({ categoria });
+        UI.closeModal();
+        UI.toast(`Restaurantes eliminados: ${result.eliminados || 0}`, 'success');
+        page = 1;
+        loadList();
+      } catch (err) {
+        UI.toast(err.message, 'error');
+      }
+    });
   }
 
   async function performSearch() {

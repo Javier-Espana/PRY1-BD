@@ -59,8 +59,10 @@ const API = (() => {
       obtener: (id) => request('GET', `/menu/${id}`),
       crear: (data) => request('POST', '/menu', data),
       crearVarios: (articulos) => request('POST', '/menu/varios', { articulos }),
+      actualizarVarios: (filtro, datos) => request('PATCH', '/menu/varios', { filtro, datos }),
       actualizar: (id, data) => request('PUT', `/menu/${id}`, data),
       eliminar: (id) => request('DELETE', `/menu/${id}`),
+      eliminarVarios: (filtro) => request('DELETE', '/menu/varios', { filtro }),
       buscar: (params) => request('GET', `/menu/buscar${qs(params)}`)
     },
 
